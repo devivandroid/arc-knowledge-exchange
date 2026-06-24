@@ -1,0 +1,715 @@
+"use client";
+
+import { useState } from "react";
+import { isAddress, keccak256, toUtf8Bytes } from "ethers";
+import { useSearchParams } from "next/navigation";
+import { LoadingSpinner } from "@/components/LoadingSpinner";
+import { PageHeader } from "@/components/PageHeader";
+import { PageShell } from "@/components/PageShell";
+import { TaskStatusBadge } from "@/components/TaskStatusBadge";
+import { TransactionStatus, type TransactionState } from "@/components/TransactionStatus";
+import {
+  isEscrowConfigured,
+  useEscrowContract,
+  useHasApplied,
+  useTask,
+  useTaskApplicants
+} from "@/hooks/useEscrowContract";
+import { useUsdc } from "@/hooks/useUsdc";
+import { useWallet } from "@/hooks/useWallet";
+import { escrowContractAddress, usdcDecimals } from "@/lib/contracts/microWorkEscrow";
+import { parseTaskMetadata } from "@/lib/taskMetadata";
+import { getExplorerAddressUrl, normalizeWeb3Error, shortenAddress } from "@/lib/web3";
+
+const zeroAddress = "0x0000000000000000000000000000000000000000";
+const lifecycleSteps = ["Created", "Funded", "Assigned", "Submitted", "Released"];
+
+type RunnableTransaction = {
+  hash: string;
+  wait: () => Promise<unknown>;
+};
+
+type TaskDetailsClientProps = {
+  taskId: bigint | null;
+};
+
+function formatTimestamp(value: bigint): string {
+  if (value === 0n) {
+    return "Not set";
+  }
+
+  return new Date(Number(value) * 1000).toLocaleString();
+}
+
+function StatusTimeline({ status }: { status: string }) {
+  const currentIndex = lifecycleSteps.indexOf(status);
+
+  return (
+    <div className="mt-6 rounded-lg border border-arc-border bg-black/20 p-4">
+      <p className="text-sm font-semibold text-white">Status timeline</p>
+      <div className="mt-4 grid gap-3 md:grid-cols-5">
+        {lifecycleSteps.map((step, index) => {
+          const isDone = currentIndex >= index && currentIndex !== -1;
+          const isCurrent = currentIndex === index;
+
+          return (
+            <div
+              key={step}
+              className={`rounded-lg border p-3 ${
+                isCurrent
+                  ? "border-arc-blue bg-arc-blue/10"
+                  : isDone
+                    ? "border-arc-mint/40 bg-arc-mint/10"
+                    : "border-arc-border bg-white/5"
+              }`}
+            >
+              <p className="text-xs font-medium text-slate-500">Step {index + 1}</p>
+              <p className="mt-1 text-sm font-semibold text-white">{step}</p>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+export function TaskDetailsClient({ taskId }: TaskDetailsClientProps) {
+  const searchParams = useSearchParams();
+  const { address, isArcTestnet, switchToArcTestnet } = useWallet();
+  const { approve, allowance, balance, invalidateUsdc } = useUsdc();
+  const {
+    fundTask,
+    assignFreelancer,
+    applyForTask,
+    submitWork,
+    approveAndRelease,
+    cancelTask,
+    invalidateTasks
+  } = useEscrowContract();
+  const taskQuery = useTask(taskId);
+  const applicantsQuery = useTaskApplicants(taskId);
+  const hasAppliedQuery = useHasApplied(taskId, address);
+  const [freelancerAddress, setFreelancerAddress] = useState("");
+  const [deliveryText, setDeliveryText] = useState("");
+  const [txState, setTxState] = useState<TransactionState>({ phase: "idle" });
+
+  const task = taskQuery.data;
+  const metadata = task ? parseTaskMetadata(task.metadataURI) : null;
+  const deliveryMetadata = task ? parseTaskMetadata(task.deliveryURI) : null;
+  const normalizedAddress = address?.toLowerCase();
+  const isClient = Boolean(
+    task && normalizedAddress && task.client.toLowerCase() === normalizedAddress
+  );
+  const isFreelancer = Boolean(
+    task && normalizedAddress && task.freelancer.toLowerCase() === normalizedAddress
+  );
+  const canViewSubmission = isClient || isFreelancer;
+  const needsApproval = Boolean(task && allowance < task.amount);
+  const hasEnoughBalance = Boolean(task && balance >= task.amount);
+  const applicants = applicantsQuery.data ?? [];
+  const isTxBusy = ["signature", "submitted", "confirming"].includes(txState.phase);
+  const wasJustCreated = searchParams.get("created") === "1";
+  const roleLabel = !address
+    ? "Wallet not connected"
+    : isClient
+      ? "You are the requester"
+      : isFreelancer
+        ? "You are the assigned provider"
+        : "You are viewing this request";
+  const roleMessage = !address
+    ? "Connect MetaMask to apply, fund, submit a delivery, or release funds."
+    : !isArcTestnet
+      ? "Switch to Arc Testnet before sending transactions."
+      : isClient
+        ? "Use the requester wallet to fund, assign, cancel, or release funds."
+        : isFreelancer
+          ? "Use the assigned provider wallet to submit a completed delivery."
+          : task?.statusLabel === "Funded"
+            ? "You can apply for this funded request."
+            : "Connect the wallet required for the next action.";
+
+  const runTx = async (action: () => Promise<RunnableTransaction>, message: string) => {
+    if (!isArcTestnet) {
+      await switchToArcTestnet();
+      return;
+    }
+
+    try {
+      setTxState({ phase: "signature", message });
+      const tx = await action();
+      setTxState({ phase: "submitted", hash: tx.hash, message: "Transaction submitted." });
+      await tx.wait();
+      await invalidateTasks();
+      await invalidateUsdc();
+      setTxState({ phase: "success", hash: tx.hash, message: "Transaction confirmed." });
+    } catch (error) {
+      setTxState({ phase: "error", message: normalizeWeb3Error(error) });
+    }
+  };
+
+  const handleApprove = async () => {
+    if (task) {
+      await runTx(() => approve(task.amountUsdc), "Approve USDC spending in MetaMask.");
+    }
+  };
+
+  const handleFund = async () => {
+    if (!task) {
+      return;
+    }
+
+    if (!hasEnoughBalance) {
+      setTxState({ phase: "error", message: "Insufficient ERC-20 USDC balance." });
+      return;
+    }
+
+    await runTx(() => fundTask(task.id), "Fund Escrow in MetaMask.");
+  };
+
+  const handleAssign = async () => {
+    if (!task) {
+      return;
+    }
+
+    if (
+      !isAddress(freelancerAddress) ||
+      freelancerAddress.toLowerCase() === task.client.toLowerCase()
+    ) {
+      setTxState({
+        phase: "error",
+        message: "Enter a valid provider address different from the requester."
+      });
+      return;
+    }
+
+    await runTx(() => assignFreelancer(task.id, freelancerAddress), "Assign provider in MetaMask.");
+  };
+
+  const handleAssignApplicant = async (applicantAddress: string) => {
+    if (!task) {
+      return;
+    }
+
+    await runTx(() => assignFreelancer(task.id, applicantAddress), "Assign provider in MetaMask.");
+  };
+
+  const handleApply = async () => {
+    if (!task) {
+      return;
+    }
+
+    await runTx(() => applyForTask(task.id), "Apply for this request in MetaMask.");
+  };
+
+  const handleSubmitWork = async () => {
+    if (!task || !deliveryText.trim()) {
+      setTxState({ phase: "error", message: "Enter delivery notes or a delivery link first." });
+      return;
+    }
+
+    const deliveryPayload = {
+      note: deliveryText.trim(),
+      submittedAt: new Date().toISOString(),
+      createdFrom: "Arc Knowledge Exchange"
+    };
+    const deliveryURI = `data:application/json;base64,${btoa(JSON.stringify(deliveryPayload))}`;
+    const deliveryHash = keccak256(toUtf8Bytes(deliveryURI));
+    await runTx(
+      () => submitWork(task.id, deliveryHash, deliveryURI),
+      "Submit delivery in MetaMask."
+    );
+  };
+
+  return (
+    <PageShell>
+      <PageHeader
+        eyebrow="Request detail"
+        title={metadata?.title || (task ? `Request #${task.id.toString()}` : "Request Details")}
+        description={
+          metadata?.description ||
+          "Review request scope, escrow status, provider delivery, and release state on Arc Testnet."
+        }
+      />
+
+      {!isEscrowConfigured ? (
+        <div className="mb-5 rounded-lg border border-amber-300/40 bg-amber-300/10 p-4 text-sm text-amber-100">
+          Escrow contract is not configured. Deploy the contract and set
+          NEXT_PUBLIC_ESCROW_CONTRACT.
+        </div>
+      ) : null}
+
+      {taskQuery.isLoading ? (
+        <div className="rounded-lg border border-arc-border bg-arc-panel/80 p-6 text-sm text-slate-400">
+          Loading request from Arc Testnet...
+        </div>
+      ) : null}
+
+      {taskQuery.error || taskId === null ? (
+        <div className="rounded-lg border border-red-400/40 bg-red-400/10 p-4 text-sm text-red-100">
+          Unable to load this request. Check the request ID and contract configuration.
+        </div>
+      ) : null}
+
+      {task ? (
+        <div className="grid gap-5 lg:grid-cols-[1fr_24rem]">
+          <section className="rounded-lg border border-arc-border bg-arc-panel/80 p-5">
+            <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+              <TaskStatusBadge status={task.statusLabel} />
+              {escrowContractAddress ? (
+                <a
+                  href={getExplorerAddressUrl(escrowContractAddress)}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-sm text-arc-blue hover:text-white"
+                >
+                  Escrow contract
+                </a>
+              ) : null}
+            </div>
+
+            <dl className="grid gap-4 text-sm md:grid-cols-2">
+              <div>
+                <dt className="text-slate-500">Access model</dt>
+                <dd className="mt-1 text-white">Manual Access (Escrow)</dd>
+              </div>
+              <div>
+                <dt className="text-slate-500">Requester</dt>
+                <dd className="mt-1">
+                  <a
+                    href={getExplorerAddressUrl(task.client)}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-white hover:text-arc-blue"
+                  >
+                    {shortenAddress(task.client)}
+                  </a>
+                </dd>
+              </div>
+              <div>
+                <dt className="text-slate-500">Provider</dt>
+                <dd className="mt-1">
+                  {task.freelancer === zeroAddress ? (
+                    <span className="text-white">Not assigned</span>
+                  ) : (
+                    <a
+                      href={getExplorerAddressUrl(task.freelancer)}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-white hover:text-arc-blue"
+                    >
+                      {shortenAddress(task.freelancer)}
+                    </a>
+                  )}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-slate-500">Amount</dt>
+                <dd className="mt-1 text-white">{task.amountUsdc} USDC</dd>
+              </div>
+              <div>
+                <dt className="text-slate-500">License</dt>
+                <dd className="mt-1 text-white">{metadata?.license || "Not specified"}</dd>
+              </div>
+              <div>
+                <dt className="text-slate-500">Resource type</dt>
+                <dd className="mt-1 text-white">{metadata?.resourceType || "Custom Service"}</dd>
+              </div>
+              <div>
+                <dt className="text-slate-500">USDC decimals</dt>
+                <dd className="mt-1 text-white">{usdcDecimals}</dd>
+              </div>
+              <div>
+                <dt className="text-slate-500">Created</dt>
+                <dd className="mt-1 text-white">{formatTimestamp(task.createdAt)}</dd>
+              </div>
+              <div>
+                <dt className="text-slate-500">Funded</dt>
+                <dd className="mt-1 text-white">{formatTimestamp(task.fundedAt)}</dd>
+              </div>
+              <div>
+                <dt className="text-slate-500">Submitted</dt>
+                <dd className="mt-1 text-white">{formatTimestamp(task.submittedAt)}</dd>
+              </div>
+              <div>
+                <dt className="text-slate-500">Released</dt>
+                <dd className="mt-1 text-white">{formatTimestamp(task.releasedAt)}</dd>
+              </div>
+            </dl>
+
+            <StatusTimeline status={task.statusLabel} />
+
+            <div className="mt-6 grid gap-3">
+              {task.statusLabel === "Submitted" || task.statusLabel === "Released" ? (
+                <div className="rounded-lg border border-arc-mint/30 bg-arc-mint/10 p-4">
+                  <p className="text-sm font-semibold text-arc-mint">Provider delivery</p>
+                  {canViewSubmission && deliveryMetadata?.note ? (
+                    <p className="mt-3 rounded-lg bg-black/30 p-3 text-sm leading-6 text-slate-200">
+                      {deliveryMetadata.note}
+                    </p>
+                  ) : !canViewSubmission ? (
+                    <div className="mt-3 overflow-hidden rounded-lg border border-arc-border bg-black/30 p-3">
+                      <p className="select-none text-sm leading-6 text-slate-300 blur-sm">
+                        Delivery content is hidden from viewers who are not the requester or
+                        assigned provider.
+                      </p>
+                      <p className="mt-3 text-sm leading-6 text-slate-400">
+                        This request has a provider delivery, but only the requester and assigned
+                        provider can view its contents in the app.
+                      </p>
+                    </div>
+                  ) : (
+                    <p className="mt-3 text-sm leading-6 text-slate-300">
+                      The provider submitted a delivery. The contract stores the delivery URI and
+                      hash.
+                    </p>
+                  )}
+                </div>
+              ) : null}
+
+              {metadata?.description ? (
+                <div>
+                  <p className="text-sm text-slate-500">Request description</p>
+                  <p className="mt-2 rounded-lg bg-black/30 p-3 text-sm leading-6 text-slate-300">
+                    {metadata.description}
+                  </p>
+                </div>
+              ) : null}
+              {metadata?.requirements ? (
+                <div>
+                  <p className="text-sm text-slate-500">Requirements</p>
+                  <p className="mt-2 rounded-lg bg-black/30 p-3 text-sm leading-6 text-slate-300">
+                    {metadata.requirements}
+                  </p>
+                </div>
+              ) : null}
+              {metadata?.deadline ? (
+                <div>
+                  <p className="text-sm text-slate-500">Deadline</p>
+                  <p className="mt-2 rounded-lg bg-black/30 p-3 text-sm text-slate-300">
+                    {metadata.deadline}
+                  </p>
+                </div>
+              ) : null}
+            </div>
+          </section>
+
+          <aside className="self-start rounded-lg border border-arc-border bg-arc-panel/80 p-5">
+            {isClient && task.statusLabel === "Created" ? (
+              <div className="mb-5 rounded-lg border border-arc-mint/40 bg-arc-mint/10 p-4">
+                <p className="text-sm font-semibold text-arc-mint">
+                  {wasJustCreated ? "Request created" : "Fund this request"}
+                </p>
+                <p className="mt-2 text-sm font-semibold text-white">Next step: fund escrow</p>
+                <p className="mt-2 text-sm leading-6 text-slate-300">
+                  Funding locks USDC in escrow so a provider can start work.
+                </p>
+                <dl className="mt-4 grid gap-2 text-xs text-slate-400">
+                  <div className="flex justify-between gap-3">
+                    <dt>Budget amount</dt>
+                    <dd className="font-semibold text-white">{task.amountUsdc} USDC</dd>
+                  </div>
+                  <div className="flex justify-between gap-3">
+                    <dt>Request ID</dt>
+                    <dd className="font-semibold text-white">#{task.id.toString()}</dd>
+                  </div>
+                  <div className="flex justify-between gap-3">
+                    <dt>Requester wallet</dt>
+                    <dd className="font-semibold text-white">{shortenAddress(task.client)}</dd>
+                  </div>
+                  <div className="flex justify-between gap-3">
+                    <dt>Status</dt>
+                    <dd className="font-semibold text-white">Created</dd>
+                  </div>
+                </dl>
+              </div>
+            ) : null}
+
+            <div>
+              <p className="text-sm text-slate-500">Connected wallet</p>
+              <p className="mt-1 text-sm text-white">
+                {address ? shortenAddress(address) : "Not connected"}
+              </p>
+            </div>
+
+            <div className="mt-5 rounded-lg border border-arc-border bg-black/20 p-4">
+              <p className="text-sm font-semibold text-white">{roleLabel}</p>
+              <p className="mt-2 text-sm leading-6 text-slate-400">{roleMessage}</p>
+              {!isArcTestnet && address ? (
+                <button
+                  type="button"
+                  onClick={switchToArcTestnet}
+                  className="mt-3 rounded-lg border border-arc-border bg-white/5 px-3 py-2 text-sm font-semibold text-white hover:border-arc-blue"
+                >
+                  Switch to Arc Testnet
+                </button>
+              ) : null}
+            </div>
+
+            <div className="mt-5 rounded-lg border border-arc-border bg-black/20 p-4">
+              <p className="text-sm font-semibold text-white">Next step</p>
+              <p className="mt-2 text-sm leading-6 text-slate-400">
+                {task.statusLabel === "Created"
+                  ? "Lock the request budget in escrow. First approve USDC spending, then fund the request."
+                  : task.statusLabel === "Funded"
+                    ? isClient
+                      ? "Review applicants and assign the provider who will deliver this request."
+                      : "Apply for this request so the requester can assign you."
+                    : task.statusLabel === "Assigned"
+                      ? "The assigned provider can submit a delivery note or link."
+                      : task.statusLabel === "Submitted"
+                        ? "Review the submitted delivery and release funds if it is approved."
+                        : task.statusLabel === "Released"
+                          ? "Funds have been released to the provider."
+                          : "This request has been cancelled."}
+              </p>
+            </div>
+
+            {isClient && task.statusLabel === "Created" ? (
+              <div className="mt-5 grid gap-3">
+                {needsApproval ? (
+                  <div className="rounded-lg border border-arc-border bg-white/5 p-4">
+                    <p className="text-sm font-semibold text-white">1. Approve USDC</p>
+                    <p className="mt-2 text-sm leading-6 text-slate-400">
+                      This gives the escrow contract permission to move exactly {task.amountUsdc}{" "}
+                      USDC from your wallet when you fund the request.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={handleApprove}
+                      disabled={isTxBusy}
+                      className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-arc-blue px-4 py-3 text-sm font-semibold text-arc-ink disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      {isTxBusy ? <LoadingSpinner /> : null}
+                      Approve {task.amountUsdc} USDC
+                    </button>
+                  </div>
+                ) : null}
+                <div className="rounded-lg border border-arc-border bg-white/5 p-4">
+                  <p className="text-sm font-semibold text-white">Fund this request</p>
+                  <p className="mt-2 text-sm leading-6 text-slate-400">
+                    This locks {task.amountUsdc} USDC in escrow. The provider only receives it after
+                    you approve the submitted delivery.
+                  </p>
+                  <p className="mt-2 rounded-lg border border-amber-300/30 bg-amber-300/10 p-3 text-xs leading-5 text-amber-100">
+                    MetaMask may only show the network fee for this transaction. If you continue,
+                    the escrow contract will transfer {task.amountUsdc} ERC-20 USDC from your wallet
+                    into escrow.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={handleFund}
+                    disabled={needsApproval || isTxBusy}
+                    className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-arc-mint px-4 py-3 text-sm font-semibold text-arc-ink disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    {isTxBusy ? <LoadingSpinner /> : null}
+                    {needsApproval ? "Approve USDC first" : `Fund Escrow (${task.amountUsdc} USDC)`}
+                  </button>
+                </div>
+              </div>
+            ) : null}
+
+            {isClient && task.statusLabel === "Funded" ? (
+              <div className="mt-5 rounded-lg border border-arc-mint/40 bg-arc-mint/10 p-4">
+                <p className="text-sm font-semibold text-arc-mint">Escrow funded</p>
+                <p className="mt-2 text-sm leading-6 text-slate-300">
+                  Next step: assign a provider once you are ready for delivery.
+                </p>
+              </div>
+            ) : null}
+
+            {!isClient && task.statusLabel === "Created" ? (
+              <div className="mt-5 rounded-lg border border-arc-border bg-white/5 p-4">
+                <p className="text-sm font-semibold text-white">
+                  Connect the requester wallet to fund/release
+                </p>
+                <p className="mt-2 text-sm leading-6 text-slate-400">
+                  Only the requester can approve USDC and fund this request.
+                </p>
+                <button
+                  type="button"
+                  disabled
+                  className="mt-4 inline-flex w-full cursor-not-allowed items-center justify-center rounded-lg bg-white/10 px-4 py-3 text-sm font-semibold text-slate-500"
+                >
+                  Requester wallet required
+                </button>
+              </div>
+            ) : null}
+
+            {isClient && task.statusLabel === "Funded" ? (
+              <div className="mt-5 grid gap-3">
+                <div className="rounded-lg border border-arc-border bg-white/5 p-4">
+                  <p className="text-sm font-semibold text-white">Applicants</p>
+                  <p className="mt-2 text-sm leading-6 text-slate-400">
+                    Providers can apply on-chain. Pick one applicant to assign this request.
+                  </p>
+                  <div className="mt-4 grid gap-2">
+                    {applicantsQuery.isLoading ? (
+                      <p className="text-sm text-slate-500">Loading applicants...</p>
+                    ) : applicants.length > 0 ? (
+                      applicants.map((applicant) => (
+                        <div
+                          key={applicant}
+                          className="flex flex-col gap-3 rounded-lg border border-arc-border bg-black/20 p-3 sm:flex-row sm:items-center sm:justify-between"
+                        >
+                          <p className="text-sm font-medium text-white">
+                            {shortenAddress(applicant)}
+                          </p>
+                          <button
+                            type="button"
+                            onClick={() => handleAssignApplicant(applicant)}
+                            disabled={isTxBusy}
+                            className="inline-flex items-center justify-center gap-2 rounded-lg bg-arc-blue px-3 py-2 text-sm font-semibold text-arc-ink disabled:cursor-not-allowed disabled:opacity-60"
+                          >
+                            {isTxBusy ? <LoadingSpinner /> : null}
+                            Assign
+                          </button>
+                        </div>
+                      ))
+                    ) : (
+                      <p className="rounded-lg border border-dashed border-arc-border bg-black/20 p-3 text-sm text-slate-500">
+                        No applicants yet.
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                <details className="rounded-lg border border-arc-border bg-black/20 p-4">
+                  <summary className="cursor-pointer text-sm font-medium text-slate-300">
+                    Assign manually
+                  </summary>
+                  <div className="mt-4 grid gap-3">
+                    <p className="text-sm leading-6 text-slate-400">
+                      Use this if the provider shared their wallet address outside the app.
+                    </p>
+                    <input
+                      value={freelancerAddress}
+                      onChange={(event) => setFreelancerAddress(event.target.value)}
+                      placeholder="Provider wallet address"
+                      className="rounded-lg border border-arc-border bg-black/30 px-4 py-3 text-sm text-white outline-none focus:border-arc-blue"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleAssign}
+                      disabled={isTxBusy}
+                      className="inline-flex items-center justify-center gap-2 rounded-lg bg-arc-blue px-4 py-3 text-sm font-semibold text-arc-ink disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      {isTxBusy ? <LoadingSpinner /> : null}
+                      Assign Provider
+                    </button>
+                  </div>
+                </details>
+              </div>
+            ) : null}
+
+            {!isClient && task.statusLabel === "Funded" ? (
+              <div className="mt-5 rounded-lg border border-arc-border bg-white/5 p-4">
+                <p className="text-sm font-semibold text-white">Apply as provider</p>
+                <p className="mt-2 text-sm leading-6 text-slate-400">
+                  Apply on-chain so the requester can see your wallet and assign the request to you.
+                </p>
+                <button
+                  type="button"
+                  onClick={handleApply}
+                  disabled={!address || hasAppliedQuery.data || isTxBusy}
+                  className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-arc-blue px-4 py-3 text-sm font-semibold text-arc-ink disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {isTxBusy ? <LoadingSpinner /> : null}
+                  {hasAppliedQuery.data ? "Already applied" : "Apply for this request"}
+                </button>
+              </div>
+            ) : null}
+
+            {isFreelancer && task.statusLabel === "Assigned" ? (
+              <div className="mt-5 grid gap-3">
+                <p className="text-sm leading-6 text-slate-400">
+                  Submit a short delivery note or link. The app stores a hash of this text on-chain.
+                </p>
+                <textarea
+                  value={deliveryText}
+                  onChange={(event) => setDeliveryText(event.target.value)}
+                  placeholder="Delivery notes or link"
+                  className="min-h-28 rounded-lg border border-arc-border bg-black/30 px-4 py-3 text-sm text-white outline-none focus:border-arc-blue"
+                />
+                <button
+                  type="button"
+                  onClick={handleSubmitWork}
+                  disabled={isTxBusy}
+                  className="inline-flex items-center justify-center gap-2 rounded-lg bg-arc-blue px-4 py-3 text-sm font-semibold text-arc-ink disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {isTxBusy ? <LoadingSpinner /> : null}
+                  Submit Delivery
+                </button>
+              </div>
+            ) : null}
+
+            {!isFreelancer && task.statusLabel === "Assigned" ? (
+              <div className="mt-5 rounded-lg border border-arc-border bg-white/5 p-4">
+                <p className="text-sm font-semibold text-white">
+                  Connect the provider wallet to submit delivery
+                </p>
+                <p className="mt-2 text-sm leading-6 text-slate-400">
+                  Delivery can only be submitted by the wallet assigned to this request.
+                </p>
+                <button
+                  type="button"
+                  disabled
+                  className="mt-4 inline-flex w-full cursor-not-allowed items-center justify-center rounded-lg bg-white/10 px-4 py-3 text-sm font-semibold text-slate-500"
+                >
+                  Provider wallet required
+                </button>
+              </div>
+            ) : null}
+
+            {isClient && task.statusLabel === "Submitted" ? (
+              <button
+                type="button"
+                onClick={() =>
+                  runTx(() => approveAndRelease(task.id), "Release funds in MetaMask.")
+                }
+                disabled={isTxBusy}
+                className="inline-flex items-center justify-center gap-2 rounded-lg bg-arc-mint px-4 py-3 text-sm font-semibold text-arc-ink disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {isTxBusy ? <LoadingSpinner /> : null}
+                Approve & Release Funds
+              </button>
+            ) : null}
+
+            {!isClient && task.statusLabel === "Submitted" ? (
+              <div className="mt-5 rounded-lg border border-arc-border bg-white/5 p-4">
+                <p className="text-sm font-semibold text-white">
+                  Connect the requester wallet to fund/release
+                </p>
+                <p className="mt-2 text-sm leading-6 text-slate-400">
+                  Only the requester can approve the submitted delivery and release funds.
+                </p>
+                <button
+                  type="button"
+                  disabled
+                  className="mt-4 inline-flex w-full cursor-not-allowed items-center justify-center rounded-lg bg-white/10 px-4 py-3 text-sm font-semibold text-slate-500"
+                >
+                  Requester wallet required
+                </button>
+              </div>
+            ) : null}
+
+            {isClient && (task.statusLabel === "Created" || task.statusLabel === "Funded") ? (
+              <button
+                type="button"
+                onClick={() => runTx(() => cancelTask(task.id), "Cancel request in MetaMask.")}
+                disabled={isTxBusy}
+                className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-lg border border-red-300/40 bg-red-300/10 px-4 py-3 text-sm font-semibold text-red-100 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {isTxBusy ? <LoadingSpinner /> : null}
+                Cancel Request
+              </button>
+            ) : null}
+
+            <div className="mt-5">
+              <TransactionStatus state={txState} />
+            </div>
+          </aside>
+        </div>
+      ) : null}
+    </PageShell>
+  );
+}

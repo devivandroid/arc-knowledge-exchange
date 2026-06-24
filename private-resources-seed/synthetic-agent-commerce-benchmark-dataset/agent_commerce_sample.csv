@@ -1,0 +1,51 @@
+event_id,timestamp,agent_id,provider_id,resource_category,resource_type,payment_amount_usdc,payment_success,retry_count,execution_latency_ms,tool_used,chain_name,gas_fee_usdc,purchase_completed,satisfaction_score,workflow_reused,payment_method,model_family,execution_cost_usdc
+evt_0001,2026-05-01T09:02:11Z,agt_research_014,prv_schema_002,API Monetization,JSON Schema,0.75,true,0,1840,resource_search,Arc Testnet,0.0021,true,4.7,true,USDC_TRANSFER,gpt-4.1,0.018
+evt_0002,2026-05-01T09:07:42Z,agt_procure_021,prv_policy_004,Payment Governance,Policy Matrix,2.80,true,0,2310,verify_payment,Arc Testnet,0.0024,true,4.6,true,USDC_TRANSFER,claude-3.7,0.024
+evt_0003,2026-05-01T09:18:06Z,agt_rag_009,prv_taxonomy_007,Knowledge Engineering,Dataset,1.10,true,0,1995,fetch_resource,Arc Testnet,0.0020,true,4.8,false,HTTP_402_USDC,llama-3.1,0.012
+evt_0004,2026-05-01T09:31:27Z,agt_risk_031,prv_data_011,Fraud Detection,Dataset,18.00,true,1,5120,download_file,Arc Testnet,0.0033,true,4.5,true,HTTP_402_USDC,gpt-4.1,0.041
+evt_0005,2026-05-01T09:44:15Z,agt_support_006,prv_prompt_008,Prompt Evaluation,CSV Test Suite,0.65,true,0,1510,resource_search,Arc Testnet,0.0019,true,4.2,false,USDC_TRANSFER,mistral-large,0.009
+evt_0006,2026-05-01T10:02:53Z,agt_treasury_018,prv_treasury_003,Treasury Controls,Checklist,0.55,true,0,1764,verify_payment,Arc Testnet,0.0022,true,4.9,true,USDC_TRANSFER,gpt-4.1,0.016
+evt_0007,2026-05-01T10:21:34Z,agt_mcp_027,prv_mcp_006,Developer Tools,MCP Server,2.25,true,0,2890,fetch_resource,Arc Testnet,0.0025,true,4.4,true,HTTP_402_USDC,claude-3.7,0.028
+evt_0008,2026-05-01T10:38:12Z,agt_agentops_044,prv_gov_009,Multi-Agent Governance,Governance Matrix,3.40,false,2,7340,verify_payment,Arc Testnet,0.0057,false,2.1,false,HTTP_402_USDC,gpt-4.1,0.053
+evt_0009,2026-05-01T10:46:59Z,agt_api_011,prv_meter_010,API Monetization,Worksheet,0.65,true,1,3560,resource_search,Arc Testnet,0.0031,true,4.1,false,USDC_TRANSFER,llama-3.1,0.014
+evt_0010,2026-05-01T11:05:38Z,agt_research_014,prv_schema_002,API Monetization,JSON Schema,0.75,true,0,1660,fetch_resource,Arc Testnet,0.0020,true,4.9,true,HTTP_402_USDC,gpt-4.1,0.017
+evt_0011,2026-05-01T11:19:43Z,agt_risk_031,prv_data_011,Fraud Detection,Dataset,18.00,true,0,4884,download_file,Arc Testnet,0.0032,true,4.6,true,USDC_TRANSFER,gpt-4.1,0.039
+evt_0012,2026-05-01T11:33:10Z,agt_procure_021,prv_workflow_005,Procurement Automation,YAML Pack,0.95,true,0,2102,verify_payment,Arc Testnet,0.0024,true,4.3,true,HTTP_402_USDC,claude-3.7,0.022
+evt_0013,2026-05-01T11:47:55Z,agt_eval_019,prv_prompt_008,Prompt Evaluation,CSV Test Suite,0.65,true,0,1432,fetch_resource,Arc Testnet,0.0018,true,4.0,false,USDC_TRANSFER,mistral-large,0.008
+evt_0014,2026-05-01T12:03:09Z,agt_commerce_050,prv_agentdata_012,AI Agents,Dataset,65.00,true,1,6215,download_file,Arc Testnet,0.0041,true,4.8,true,HTTP_402_USDC,gpt-4.1,0.061
+evt_0015,2026-05-01T12:18:22Z,agt_rag_009,prv_taxonomy_007,Knowledge Engineering,Dataset,1.10,false,1,5401,verify_payment,Arc Testnet,0.0039,false,2.8,false,HTTP_402_USDC,llama-3.1,0.021
+evt_0016,2026-05-01T12:34:57Z,agt_mcp_027,prv_mcp_006,Developer Tools,MCP Server,2.25,true,0,2715,fetch_resource,Arc Testnet,0.0024,true,4.7,true,USDC_TRANSFER,claude-3.7,0.026
+evt_0017,2026-05-01T12:49:18Z,agt_security_033,prv_wallet_001,Wallet Security,Checklist,0.95,true,0,1885,resource_search,Arc Testnet,0.0020,true,4.6,false,USDC_TRANSFER,gpt-4.1,0.015
+evt_0018,2026-05-01T13:07:40Z,agt_support_006,prv_prompt_008,Prompt Evaluation,CSV Test Suite,0.65,true,0,1578,fetch_resource,Arc Testnet,0.0019,true,4.3,true,HTTP_402_USDC,mistral-large,0.010
+evt_0019,2026-05-01T13:23:21Z,agt_finops_029,prv_riskdata_013,Risk Analytics,Dataset,95.00,true,1,7024,download_file,Arc Testnet,0.0048,true,4.9,true,HTTP_402_USDC,gpt-4.1,0.074
+evt_0020,2026-05-01T13:41:06Z,agt_api_011,prv_schema_002,API Monetization,JSON Schema,0.75,true,0,1711,verify_payment,Arc Testnet,0.0021,true,4.5,false,USDC_TRANSFER,llama-3.1,0.013
+evt_0021,2026-05-01T14:04:33Z,agt_research_014,prv_taxonomy_007,Knowledge Engineering,Dataset,1.10,true,0,2050,fetch_resource,Arc Testnet,0.0022,true,4.4,true,USDC_TRANSFER,gpt-4.1,0.018
+evt_0022,2026-05-01T14:19:49Z,agt_procure_021,prv_policy_004,Payment Governance,Policy Matrix,2.80,true,0,2365,resource_search,Arc Testnet,0.0023,true,4.7,true,HTTP_402_USDC,claude-3.7,0.025
+evt_0023,2026-05-01T14:36:01Z,agt_agentops_044,prv_gov_009,Multi-Agent Governance,Governance Matrix,3.40,true,1,4112,verify_payment,Arc Testnet,0.0034,true,4.0,false,HTTP_402_USDC,gpt-4.1,0.035
+evt_0024,2026-05-01T14:51:27Z,agt_commerce_050,prv_agentdata_012,AI Agents,Dataset,65.00,true,0,5944,download_file,Arc Testnet,0.0040,true,4.7,true,USDC_TRANSFER,gpt-4.1,0.058
+evt_0025,2026-05-01T15:08:02Z,agt_treasury_018,prv_treasury_003,Treasury Controls,Checklist,0.55,true,0,1802,fetch_resource,Arc Testnet,0.0020,true,4.6,false,USDC_TRANSFER,gpt-4.1,0.016
+evt_0026,2026-05-01T15:24:11Z,agt_eval_019,prv_prompt_008,Prompt Evaluation,CSV Test Suite,0.65,false,1,4630,verify_payment,Arc Testnet,0.0035,false,2.5,false,HTTP_402_USDC,mistral-large,0.017
+evt_0027,2026-05-01T15:39:56Z,agt_risk_031,prv_data_011,Fraud Detection,Dataset,18.00,true,0,4906,download_file,Arc Testnet,0.0032,true,4.4,true,USDC_TRANSFER,gpt-4.1,0.040
+evt_0028,2026-05-01T16:02:14Z,agt_mcp_027,prv_mcp_006,Developer Tools,MCP Server,2.25,true,0,2633,resource_search,Arc Testnet,0.0023,true,4.5,true,HTTP_402_USDC,claude-3.7,0.026
+evt_0029,2026-05-01T16:18:45Z,agt_api_011,prv_meter_010,API Monetization,Worksheet,0.65,true,0,1603,fetch_resource,Arc Testnet,0.0019,true,4.2,false,USDC_TRANSFER,llama-3.1,0.012
+evt_0030,2026-05-01T16:37:08Z,agt_finops_029,prv_riskdata_013,Risk Analytics,Dataset,95.00,true,0,6840,download_file,Arc Testnet,0.0046,true,4.8,true,HTTP_402_USDC,gpt-4.1,0.071
+evt_0031,2026-05-01T16:55:19Z,agt_security_033,prv_wallet_001,Wallet Security,Checklist,0.95,true,0,1918,verify_payment,Arc Testnet,0.0021,true,4.6,false,USDC_TRANSFER,gpt-4.1,0.016
+evt_0032,2026-05-01T17:13:40Z,agt_rag_009,prv_taxonomy_007,Knowledge Engineering,Dataset,1.10,true,0,2145,fetch_resource,Arc Testnet,0.0022,true,4.3,true,HTTP_402_USDC,llama-3.1,0.014
+evt_0033,2026-05-01T17:28:57Z,agt_commerce_050,prv_agentdata_012,AI Agents,Dataset,65.00,false,2,9120,download_file,Arc Testnet,0.0064,false,3.0,false,HTTP_402_USDC,gpt-4.1,0.082
+evt_0034,2026-05-01T17:44:16Z,agt_procure_021,prv_workflow_005,Procurement Automation,YAML Pack,0.95,true,0,2210,fetch_resource,Arc Testnet,0.0022,true,4.4,true,USDC_TRANSFER,claude-3.7,0.021
+evt_0035,2026-05-01T18:03:28Z,agt_support_006,prv_prompt_008,Prompt Evaluation,CSV Test Suite,0.65,true,0,1494,resource_search,Arc Testnet,0.0018,true,4.1,false,USDC_TRANSFER,mistral-large,0.009
+evt_0036,2026-05-01T18:20:50Z,agt_agentops_044,prv_gov_009,Multi-Agent Governance,Governance Matrix,3.40,true,0,3554,verify_payment,Arc Testnet,0.0029,true,4.2,true,HTTP_402_USDC,gpt-4.1,0.034
+evt_0037,2026-05-01T18:39:07Z,agt_finops_029,prv_riskdata_013,Risk Analytics,Dataset,95.00,true,1,7310,download_file,Arc Testnet,0.0049,true,4.7,true,HTTP_402_USDC,gpt-4.1,0.076
+evt_0038,2026-05-01T18:56:30Z,agt_treasury_018,prv_treasury_003,Treasury Controls,Checklist,0.55,true,0,1736,fetch_resource,Arc Testnet,0.0020,true,4.5,false,USDC_TRANSFER,gpt-4.1,0.015
+evt_0039,2026-05-01T19:14:12Z,agt_research_014,prv_schema_002,API Monetization,JSON Schema,0.75,true,0,1688,resource_search,Arc Testnet,0.0020,true,4.7,true,HTTP_402_USDC,gpt-4.1,0.017
+evt_0040,2026-05-01T19:32:44Z,agt_api_011,prv_meter_010,API Monetization,Worksheet,0.65,true,0,1592,fetch_resource,Arc Testnet,0.0019,true,4.1,true,USDC_TRANSFER,llama-3.1,0.012
+evt_0041,2026-05-01T19:51:08Z,agt_commerce_050,prv_agentdata_012,AI Agents,Dataset,65.00,true,0,6012,download_file,Arc Testnet,0.0042,true,4.8,true,HTTP_402_USDC,gpt-4.1,0.060
+evt_0042,2026-05-01T20:06:35Z,agt_eval_019,prv_prompt_008,Prompt Evaluation,CSV Test Suite,0.65,true,0,1460,verify_payment,Arc Testnet,0.0018,true,4.0,false,USDC_TRANSFER,mistral-large,0.008
+evt_0043,2026-05-01T20:24:17Z,agt_risk_031,prv_data_011,Fraud Detection,Dataset,18.00,true,0,4765,download_file,Arc Testnet,0.0031,true,4.5,true,USDC_TRANSFER,gpt-4.1,0.038
+evt_0044,2026-05-01T20:41:22Z,agt_security_033,prv_wallet_001,Wallet Security,Checklist,0.95,true,0,1864,fetch_resource,Arc Testnet,0.0020,true,4.7,false,USDC_TRANSFER,gpt-4.1,0.016
+evt_0045,2026-05-01T20:58:46Z,agt_finops_029,prv_riskdata_013,Risk Analytics,Dataset,95.00,false,2,10420,download_file,Arc Testnet,0.0072,false,2.7,false,HTTP_402_USDC,gpt-4.1,0.093
+evt_0046,2026-05-01T21:16:03Z,agt_mcp_027,prv_mcp_006,Developer Tools,MCP Server,2.25,true,0,2704,fetch_resource,Arc Testnet,0.0024,true,4.4,true,HTTP_402_USDC,claude-3.7,0.026
+evt_0047,2026-05-01T21:34:19Z,agt_procure_021,prv_policy_004,Payment Governance,Policy Matrix,2.80,true,0,2409,verify_payment,Arc Testnet,0.0024,true,4.6,true,USDC_TRANSFER,claude-3.7,0.025
+evt_0048,2026-05-01T21:52:55Z,agt_rag_009,prv_taxonomy_007,Knowledge Engineering,Dataset,1.10,true,0,2033,resource_search,Arc Testnet,0.0021,true,4.2,false,USDC_TRANSFER,llama-3.1,0.013
+evt_0049,2026-05-01T22:11:34Z,agt_commerce_050,prv_agentdata_012,AI Agents,Dataset,65.00,true,0,5890,download_file,Arc Testnet,0.0040,true,4.9,true,HTTP_402_USDC,gpt-4.1,0.059
+evt_0050,2026-05-01T22:30:18Z,agt_finops_029,prv_riskdata_013,Risk Analytics,Dataset,95.00,true,0,6725,download_file,Arc Testnet,0.0045,true,4.8,true,HTTP_402_USDC,gpt-4.1,0.070

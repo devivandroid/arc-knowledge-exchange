@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title desc">
+  <title id="title">Arc Knowledge Exchange logo mark</title>
+  <desc id="desc">A geometric isometric cube brand mark with purple, blue, and cyan gradients.</desc>
+  <defs>
+    <linearGradient id="top" x1="124" x2="388" y1="72" y2="224" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#7C3AED" />
+      <stop offset="0.5" stop-color="#5B21B6" />
+      <stop offset="1" stop-color="#06B6D4" />
+    </linearGradient>
+    <linearGradient id="left" x1="118" x2="266" y1="142" y2="424" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#7C3AED" />
+      <stop offset="0.55" stop-color="#5B21B6" />
+      <stop offset="1" stop-color="#2563EB" />
+    </linearGradient>
+    <linearGradient id="right" x1="254" x2="394" y1="222" y2="150" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#2563EB" />
+      <stop offset="1" stop-color="#06B6D4" />
+    </linearGradient>
+    <linearGradient id="inner" x1="166" x2="350" y1="236" y2="344" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#0B1020" />
+      <stop offset="1" stop-color="#111827" />
+    </linearGradient>
+    <filter id="glow" x="56" y="36" width="400" height="440" color-interpolation-filters="sRGB">
+      <feDropShadow dx="0" dy="18" stdDeviation="18" flood-color="#2563EB" flood-opacity="0.24" />
+      <feDropShadow dx="0" dy="0" stdDeviation="10" flood-color="#06B6D4" flood-opacity="0.18" />
+    </filter>
+  </defs>
+
+  <g filter="url(#glow)">
+    <path
+      fill="url(#top)"
+      fill-rule="evenodd"
+      d="M256 64 400 146 256 228 112 146 256 64Zm0 54 50 28-50 29-50-29 50-28Z"
+    />
+    <path
+      fill="url(#left)"
+      fill-rule="evenodd"
+      d="M112 146 256 228v220L112 366V146Zm54 96v92l46 27v-92l-46-27Z"
+    />
+    <path
+      fill="url(#right)"
+      fill-rule="evenodd"
+      d="M400 146v220l-144 82V228l144-82Zm-54 96-46 27v92l46-27v-92Z"
+    />
+    <path fill="url(#inner)" d="m206 146 50-28 50 28-50 29-50-29Z" opacity="0.96" />
+    <path fill="#0B1020" d="m166 242 46 27v92l-46-27v-92Z" opacity="0.78" />
+    <path fill="#0B1020" d="m346 242-46 27v92l46-27v-92Z" opacity="0.62" />
+    <path fill="#38BDF8" d="m256 228 144-82v34l-144 82-144-82v-34l144 82Z" opacity="0.22" />
+  </g>
+</svg>

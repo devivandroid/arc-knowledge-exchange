@@ -1,0 +1,55 @@
+FROM node:22-alpine AS deps
+WORKDIR /app
+COPY package.json package-lock.json* ./
+RUN if [ -f package-lock.json ]; then npm ci; else npm install; fi
+
+FROM node:22-alpine AS builder
+WORKDIR /app
+ENV NEXT_TELEMETRY_DISABLED=1
+ARG NEXT_PUBLIC_RPC_URL
+ARG NEXT_PUBLIC_APP_URL
+ARG NEXT_PUBLIC_CHAIN_ID
+ARG NEXT_PUBLIC_EXPLORER_URL
+ARG NEXT_PUBLIC_USDC_ADDRESS
+ARG NEXT_PUBLIC_ESCROW_CONTRACT
+ENV NEXT_PUBLIC_RPC_URL=$NEXT_PUBLIC_RPC_URL
+ENV NEXT_PUBLIC_APP_URL=$NEXT_PUBLIC_APP_URL
+ENV NEXT_PUBLIC_CHAIN_ID=$NEXT_PUBLIC_CHAIN_ID
+ENV NEXT_PUBLIC_EXPLORER_URL=$NEXT_PUBLIC_EXPLORER_URL
+ENV NEXT_PUBLIC_USDC_ADDRESS=$NEXT_PUBLIC_USDC_ADDRESS
+ENV NEXT_PUBLIC_ESCROW_CONTRACT=$NEXT_PUBLIC_ESCROW_CONTRACT
+COPY --from=deps /app/node_modules ./node_modules
+COPY . .
+RUN npm run build
+
+FROM node:22-alpine AS runner
+WORKDIR /app
+ENV NODE_ENV=production
+ENV NEXT_TELEMETRY_DISABLED=1
+ENV PORT=3000
+ARG NEXT_PUBLIC_RPC_URL
+ARG NEXT_PUBLIC_APP_URL
+ARG NEXT_PUBLIC_CHAIN_ID
+ARG NEXT_PUBLIC_EXPLORER_URL
+ARG NEXT_PUBLIC_USDC_ADDRESS
+ARG NEXT_PUBLIC_ESCROW_CONTRACT
+ENV NEXT_PUBLIC_RPC_URL=$NEXT_PUBLIC_RPC_URL
+ENV NEXT_PUBLIC_APP_URL=$NEXT_PUBLIC_APP_URL
+ENV NEXT_PUBLIC_CHAIN_ID=$NEXT_PUBLIC_CHAIN_ID
+ENV NEXT_PUBLIC_EXPLORER_URL=$NEXT_PUBLIC_EXPLORER_URL
+ENV NEXT_PUBLIC_USDC_ADDRESS=$NEXT_PUBLIC_USDC_ADDRESS
+ENV NEXT_PUBLIC_ESCROW_CONTRACT=$NEXT_PUBLIC_ESCROW_CONTRACT
+
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 nextjs
+
+COPY --from=builder /app/public ./public
+COPY --from=builder --chown=nextjs:nodejs /app/private-resources-seed ./private-resources-seed
+COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+RUN mkdir -p private-resources && chown -R nextjs:nodejs private-resources
+
+USER nextjs
+EXPOSE 3000
+
+CMD ["node", "server.js"]

@@ -1,0 +1,17 @@
+export type PublishResourceFormValues = {
+  title: string;
+  description: string;
+  budgetUsdc: string;
+  sellerAddress: string;
+  category: string;
+  tags: string;
+  license: string;
+  resourceType: string;
+  agentConsumable: boolean;
+  previewText: string;
+  lockedContent: string;
+  unlockedContentMock: string;
+  deliveryType: string;
+  requirements: string;
+  deadline: string;
+};
