@@ -66,6 +66,14 @@ const workflows = [
   }
 ];
 
+const developerCapabilities = [
+  "TypeScript SDK",
+  "Public Risk APIs",
+  "Risk Guard",
+  "Agent API",
+  "HTTP 402 Payments"
+];
+
 export default function HomePage() {
   return (
     <PageShell>
@@ -158,6 +166,39 @@ export default function HomePage() {
               <p className="mt-3 text-sm leading-6 text-slate-400">{feature.description}</p>
             </article>
           ))}
+        </div>
+      </section>
+
+      <section className="py-8">
+        <div className="rounded-lg border border-arc-border bg-arc-panel/80 p-5">
+          <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+            <div className="min-w-0">
+              <p className="text-sm font-medium uppercase tracking-normal text-arc-blue">
+                Developer Platform
+              </p>
+              <h2 className="mt-3 text-2xl font-semibold text-white">Developer Platform</h2>
+              <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-400">
+                Integrate Knowledge Exchange capabilities into your own applications and
+                autonomous agents.
+              </p>
+              <div className="mt-4 flex flex-wrap gap-2">
+                {developerCapabilities.map((capability) => (
+                  <span
+                    key={capability}
+                    className="rounded-full border border-arc-border bg-white/5 px-3 py-1 text-xs font-semibold text-slate-200"
+                  >
+                    {capability}
+                  </span>
+                ))}
+              </div>
+            </div>
+            <Link
+              href="/agent-api"
+              className="inline-flex shrink-0 rounded-lg border border-arc-border bg-white/5 px-4 py-2 text-sm font-semibold text-white transition hover:border-arc-blue"
+            >
+              View Developer Docs
+            </Link>
+          </div>
         </div>
       </section>
 
