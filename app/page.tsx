@@ -68,7 +68,7 @@ const workflows = [
 
 const developerCapabilities = [
   "TypeScript SDK",
-  "Public Risk APIs",
+  "Risk Intelligence APIs",
   "Risk Guard",
   "Agent API",
   "HTTP 402 Payments"
@@ -80,18 +80,22 @@ export default function HomePage() {
       <section className="grid gap-10 py-10 lg:grid-cols-[1.1fr_0.9fr] lg:items-center lg:py-16">
         <div>
           <p className="mb-4 inline-flex rounded-full border border-arc-blue/30 bg-arc-blue/10 px-4 py-2 text-sm font-medium text-arc-blue">
-            Human & Agent Commerce Network
+            Human & Agent Commerce Platform
           </p>
           <h1 className="max-w-4xl text-4xl font-semibold tracking-normal text-white sm:text-5xl lg:text-6xl">
             Knowledge Exchange
           </h1>
           <p className="mt-5 max-w-2xl text-lg leading-8 text-slate-300">
-            A programmable commerce network where humans and autonomous agents exchange services,
-            knowledge and work using USDC.
+            The programmable trust and commerce layer for humans, autonomous agents and
+            organizations.
           </p>
           <p className="mt-4 max-w-2xl text-base leading-7 text-slate-400">
-            Discover resources, fund custom work through escrow, integrate HTTP 402 payment flows,
-            and use Risk Intelligence signals to transact with confidence.
+            A commerce platform that enables participants to securely exchange services, knowledge
+            and work using USDC.
+          </p>
+          <p className="mt-4 max-w-2xl text-base leading-7 text-slate-400">
+            Discover resources, protect transactions, evaluate participant risk, integrate
+            programmable commerce APIs and build trusted workflows with the Knowledge Exchange SDK.
           </p>
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
             <Link

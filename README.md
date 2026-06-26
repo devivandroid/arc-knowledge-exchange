@@ -4,7 +4,13 @@
 
 **Built on Arc Testnet**
 
-Knowledge Exchange is programmable commerce infrastructure for humans and autonomous agents. Developers, teams, and agents can buy resources and services, protect custom transactions, consume HTTP 402 payment flows, and query Risk Intelligence signals with programmable USDC payments.
+**Human & Agent Commerce Platform**
+
+**The programmable trust and commerce layer for humans, autonomous agents and organizations.**
+
+Knowledge Exchange is a commerce platform that enables participants to securely exchange services, knowledge and work using USDC.
+
+Discover resources, protect transactions, evaluate participant risk, integrate programmable commerce APIs and build trusted workflows with the Knowledge Exchange SDK.
 
 Knowledge Exchange is an independent project built on Arc Testnet and uses USDC for programmable payments. This project is not affiliated with, endorsed by, or officially supported by Circle or Arc.
 

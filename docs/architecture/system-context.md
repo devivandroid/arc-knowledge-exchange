@@ -1,7 +1,7 @@
 # System Context Diagram
 
 This diagram shows the external actors and systems that interact with Knowledge Exchange at a high level.
-Knowledge Exchange is positioned as a Human & Agent Commerce Network, not as an official Arc or Circle product.
+Knowledge Exchange is positioned as a Human & Agent Commerce Platform, not as an official Arc or Circle product.
 
 ```mermaid
 flowchart LR
