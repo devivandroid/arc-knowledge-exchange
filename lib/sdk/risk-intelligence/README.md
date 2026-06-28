@@ -1,6 +1,6 @@
 # Risk Intelligence SDK
 
-Internal TypeScript client for the Knowledge Exchange Public Risk Intelligence Service.
+Internal TypeScript client for the KX Public Risk Intelligence Service.
 
 This SDK is kept inside the repository for now. It is not published to npm and does not add
 authentication, API keys, billing, rate limits or production compliance screening.
@@ -9,10 +9,12 @@ authentication, API keys, billing, rate limits or production compliance screenin
 import { RiskIntelligenceClient } from "@/lib/sdk/risk-intelligence";
 
 const client = new RiskIntelligenceClient({
-  baseUrl: "https://knowledge-exchange.fly.dev"
+  baseUrl: "https://kx-platform.fly.dev"
 });
 
 const profile = await client.getProfile("0x...");
+const network = await client.getNetworkProfile("0x...");
+const combined = await client.getCombinedProfile("0x...");
 const summary = await client.getSummary("0x...");
 const signals = await client.getSignals("0x...");
 const participants = await client.listParticipants({ limit: 10 });
@@ -27,7 +29,9 @@ const guard = await client.evaluateTransactionRisk("0x...", {
 
 ## Methods
 
-- `getProfile(wallet)` returns the full participant risk profile.
+- `getProfile(wallet)` returns the full combined participant risk profile.
+- `getNetworkProfile(wallet)` returns the Arc Testnet RPC activity profile.
+- `getCombinedProfile(wallet)` explicitly requests the combined profile.
 - `getSummary(wallet)` returns a compact profile for lightweight integrations.
 - `getSignals(wallet)` returns behavioral and risk signals only.
 - `getModel()` returns scoring methodology, tiers, confidence rules and limitations.
@@ -55,13 +59,14 @@ const decision = await client.evaluateTransactionRisk(wallet, {
 });
 ```
 
-No data is not high risk. A wallet with no Knowledge Exchange activity returns
+No data is not high risk. A wallet with no observed activity returns
 `profileStatus: "no_data"`, `riskTier: "Unknown"` and null numeric scores. Threshold helpers return
 `false` for no-data profiles because there is no numeric risk score.
 
 ## Limitations
 
-- Knowledge Exchange activity only.
+- Combined profiles use KX activity and limited Arc Testnet RPC activity.
+- Arc Network profiles are RPC-only and do not include full indexed wallet history yet.
 - Preview model.
 - Not an official Arc or Circle score.
 - Not AML, KYC, sanctions, fraud, or compliance screening.

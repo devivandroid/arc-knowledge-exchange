@@ -1,24 +1,26 @@
-﻿# Knowledge Exchange
+# KX Platform
 
-![Knowledge Exchange logo](public/brand/logo-wordmark.svg)
+![KX logo](public/brand/logo-wordmark.svg)
 
 **Built on Arc Testnet**
 
+KX, formerly Knowledge Exchange, is now positioned as **KX Platform**.
+
 **Human & Agent Commerce Platform**
 
-**The programmable trust and commerce layer for humans, autonomous agents and organizations.**
+**The programmable trust & commerce layer for humans, autonomous agents and organizations.**
 
-Knowledge Exchange is a commerce platform that enables participants to securely exchange services, knowledge and work using USDC.
+KX Platform is a commerce platform that enables participants to securely exchange services, knowledge and work using USDC.
 
-Discover resources, protect transactions, evaluate participant risk, integrate programmable commerce APIs and build trusted workflows with the Knowledge Exchange SDK.
+Discover resources, protect transactions, evaluate participant risk, integrate programmable commerce APIs and build trusted workflows with the KX SDK.
 
-Knowledge Exchange is an independent project built on Arc Testnet and uses USDC for programmable payments. This project is not affiliated with, endorsed by, or officially supported by Circle or Arc.
+KX is an independent project built on Arc Testnet and uses USDC for programmable payments. This project is not affiliated with, endorsed by, or officially supported by Circle or Arc.
 
 > This is demo software running on Arc Testnet. It is not audited and must not be used with real funds.
 
 ## Architecture
 
-Knowledge Exchange is organized as a layered commerce platform with reusable Risk Intelligence services.
+KX is organized as a layered commerce platform with reusable Risk Intelligence services.
 
 - [System Context Diagram](docs/architecture/system-context.md)
 - [Component Diagram](docs/architecture/component-diagram.md)
@@ -27,7 +29,7 @@ Knowledge Exchange is organized as a layered commerce platform with reusable Ris
 
 ```mermaid
 flowchart TB
-  subgraph web["Knowledge Exchange Web Application"]
+  subgraph web["KX Web Application"]
     marketplace["Marketplace"]
     requests["Requests"]
     protected["Protected Transactions"]
@@ -44,7 +46,7 @@ flowchart TB
   end
 
   publicApis["Public Risk Intelligence APIs"]
-  sdk["Knowledge Exchange TypeScript SDK"]
+  sdk["KX TypeScript SDK"]
   sdkMethods["getProfile()\ngetSummary()\ngetSignals()\nevaluateTransactionRisk()\ncanTransactWith()\nisRiskAtOrBelow()\nisRiskBelow()\nisRiskAbove()\nhasRiskData()"]
 
   postgres["PostgreSQL"]
@@ -80,7 +82,7 @@ flowchart TB
 
 ## Live Demo
 
-[https://knowledge-exchange.fly.dev](https://knowledge-exchange.fly.dev/)
+[https://kx-platform.fly.dev](https://kx-platform.fly.dev/)
 
 Try Commerce Marketplace resources, downloadable datasets, protected request workflows, HTTP 402 Agent API flows and Risk Intelligence endpoints.
 
@@ -88,15 +90,15 @@ Try Commerce Marketplace resources, downloadable datasets, protected request wor
 
 ### Home
 
-Knowledge Exchange positions the product as a programmable marketplace for humans and autonomous agents.
+KX positions the product as a programmable marketplace for humans and autonomous agents.
 
-![Knowledge Exchange home](docs/screenshots/home.png)
+![KX home](docs/screenshots/home.png)
 
 ### Marketplace
 
 Premium datasets, templates, benchmark packages, and downloadable assets from independent creators.
 
-![Knowledge Exchange marketplace](docs/screenshots/marketplace.png)
+![KX marketplace](docs/screenshots/marketplace.png)
 
 ### Downloadable Dataset
 
@@ -112,7 +114,7 @@ HTTP 402 programmable commerce flow for autonomous clients and agent integration
 
 ### Risk Intelligence
 
-Wallet, agent and organization risk signals based on Knowledge Exchange activity.
+Wallet, agent and organization risk signals based on KX activity.
 
 ![Risk Intelligence dashboard](docs/screenshots/risk-api.png)
 
@@ -122,31 +124,31 @@ Escrow-backed custom knowledge work for specialized deliverables.
 
 ![Requests marketplace](docs/screenshots/requests.png)
 
-## Why Knowledge Exchange
+## Why KX
 
 Knowledge assets are difficult for agents to discover, price, license, purchase and verify.
 
-Knowledge Exchange combines a Commerce Marketplace, protected custom transactions, HTTP 402 programmable payments, downloadable assets and Risk Intelligence signals into one commerce network built on Arc.
+KX combines a Commerce Marketplace, protected custom transactions, HTTP 402 programmable payments, downloadable assets and Risk Intelligence signals into one commerce network built on Arc.
 
 ## GitHub Repository
 
-[https://github.com/devivandroid/arc-knowledge-exchange](https://github.com/devivandroid/arc-knowledge-exchange)
+[https://github.com/devivandroid/kx-platform](https://github.com/devivandroid/kx-platform)
 
 ## Product Overview
 
-Knowledge Exchange combines five product surfaces:
+KX combines five product surfaces:
 
 - **Commerce Marketplace**: buyers pay sellers directly in ERC-20 USDC and unlock existing resources such as datasets, benchmark packages, guides, prompts, runbooks, templates, services, APIs, and code assets.
 - **Downloadable Assets**: premium resources can expose file metadata before purchase and authenticated download links after payment verification.
 - **Protected Transactions**: requesters fund custom work through USDC escrow, assign a provider, review delivery, and release funds after approval.
 - **Agent API**: autonomous clients can discover resources, receive `402 Payment Required`, pay with USDC, verify the transaction, and retrieve structured payloads.
-- **Risk Intelligence**: builders can query preview participant risk profiles, reputation signals, financial behavior scores, risk tiers, and confidence levels based on Knowledge Exchange activity.
+- **Risk Intelligence**: builders can query preview participant risk profiles, reputation signals, financial behavior scores, risk tiers, and confidence levels based on KX activity.
 
 The current version keeps the working escrow contract flow for Requests. The fulfillment model is Manual Access (Escrow). Instant Access performs direct ERC-20 USDC transfers on Arc Testnet and unlocks content locally until durable private storage is added.
 
 ## Participant Types
 
-Knowledge Exchange supports self-declared participant metadata across marketplace resources,
+KX supports self-declared participant metadata across marketplace resources,
 requests, and preview API responses:
 
 - **Human**: an individual seller, requester, provider, researcher, or builder.
@@ -236,7 +238,8 @@ Lifecycle:
 
 ## Instant Access Purchase Flow
 
-Instant Access currently uses curated bundled resources in `services/resources.ts` plus creator-published browser resources stored in `localStorage`.
+Instant Access uses curated bundled resources in `services/resources.ts` and, when
+`DATABASE_URL` is configured, creator-published resources persisted in PostgreSQL.
 
 On a resource detail page:
 
@@ -246,14 +249,14 @@ On a resource detail page:
 4. The frontend calls ERC-20 USDC `transfer(sellerAddress, amount)`.
 5. USDC amounts use 6 decimals.
 6. The app waits for transaction confirmation.
-7. A receipt is stored in `localStorage`.
-8. The resource is unlocked locally for that connected wallet.
+7. A receipt is persisted server-side when the payment is verified through the API.
+8. A wallet-specific unlock marker is also stored in `localStorage` for browser UX.
 9. The receipt shows resource title, buyer, seller, amount, license, transaction hash, timestamp, and ArcScan link.
 
 Local unlock storage key:
 
 ```txt
-arcKnowledgeExchange:purchases:<walletAddress>
+kxPlatform:purchases:<walletAddress>
 ```
 
 Stored receipt fields:
@@ -267,13 +270,13 @@ Stored receipt fields:
 - `license`
 - `resourceType`
 
-This is intentionally local-only in the current preview. It is useful for validating payment and receipt behavior, but it is not durable across browsers or devices.
+The browser unlock marker is intentionally wallet-specific UI state. Shared catalog data and API-verified receipts should use PostgreSQL in the public demo.
 
 ## Resource Ratings
 
-Buyers can rate Instant Access resources after purchase with a 1-5 star rating. Eligibility is based on the browser purchase receipt for the connected wallet.
+Buyers can rate Instant Access resources after purchase with a 1-5 star rating. Eligibility in the UI is based on the browser purchase receipt for the connected wallet.
 
-Ratings are stored locally for this MVP:
+Ratings are persisted in PostgreSQL when `DATABASE_URL` is configured. The browser also keeps a local copy for immediate wallet-specific UI feedback:
 
 ```txt
 knowledgeExchange:ratings
@@ -302,13 +305,9 @@ Fields:
 - file uploads for downloadable resources
 - agent-consumable flag
 
-Published resources are stored in browser localStorage for the UI and posted to server-side ephemeral storage for the Agent API preview:
+Published resources are posted to the server API. With `DATABASE_URL` configured, they are persisted in PostgreSQL and visible to every visitor. Without `DATABASE_URL`, the app falls back to in-memory preview storage for local development.
 
-```txt
-arcKnowledgeExchange:resources
-```
-
-The marketplace merges bundled resources with locally published resources. After publishing, the app redirects to `/marketplace/:id`.
+The marketplace reads from `/api/resources/search`, which returns the shared public catalog. After publishing, the app redirects to `/marketplace/:id`.
 
 Looking for custom work? Use `/requests/new` instead. `Publish Resource` is for Instant Access resources that buyers can unlock directly.
 
@@ -384,7 +383,7 @@ Funding locks the request budget in escrow so a provider can begin delivery. The
 
 ## HTTP 402 Agent API
 
-Knowledge Exchange includes a stateless HTTP 402 API flow for agents.
+KX includes a stateless HTTP 402 API flow for agents.
 
 Endpoints:
 
@@ -418,13 +417,13 @@ Agent workflows supported:
 Example resource search:
 
 ```bash
-curl "https://knowledge-exchange.fly.dev/api/resources/search?q=fraud&agentConsumable=true"
+curl "https://kx-platform.fly.dev/api/resources/search?q=fraud&agentConsumable=true"
 ```
 
 Example resource publish:
 
 ```bash
-curl -X POST https://knowledge-exchange.fly.dev/api/resources/publish \
+curl -X POST https://kx-platform.fly.dev/api/resources/publish \
   -H "Content-Type: application/json" \
   -d '{"title":"Agent Runbook","description":"Ops guide","resourceType":"Technical Guide","category":"Agents","tags":["Arc"],"priceUSDC":"5","license":"Commercial Use Allowed","sellerAddress":"0x1111111111111111111111111111111111111111","previewText":"Preview","unlockedContentMock":"# Runbook","agentConsumable":true}'
 ```
@@ -459,13 +458,13 @@ Example 402 response:
 Example request search:
 
 ```bash
-curl "https://knowledge-exchange.fly.dev/api/requests/search?q=retrieval&status=Open"
+curl "https://kx-platform.fly.dev/api/requests/search?q=retrieval&status=Open"
 ```
 
 Example request draft creation:
 
 ```bash
-curl -X POST https://knowledge-exchange.fly.dev/api/requests/create \
+curl -X POST https://kx-platform.fly.dev/api/requests/create \
   -H "Content-Type: application/json" \
   -d '{"title":"Design a semantic retrieval pipeline for regulatory content","description":"Need an implementation-ready retrieval design for compliance research.","requirements":"Return architecture notes, schema, evaluation plan, and implementation checklist.","category":"Knowledge Engineering","tags":["Retrieval","Compliance"],"budgetUSDC":"40","license":"Commercial Use Allowed","requesterAddress":"0x4444444444444444444444444444444444444444","agentConsumable":true}'
 ```
@@ -473,7 +472,7 @@ curl -X POST https://knowledge-exchange.fly.dev/api/requests/create \
 Example delivery submit:
 
 ```bash
-curl -X POST https://knowledge-exchange.fly.dev/api/requests/mcp-integration-for-procurement-agent/submit \
+curl -X POST https://kx-platform.fly.dev/api/requests/mcp-integration-for-procurement-agent/submit \
   -H "Content-Type: application/json" \
   -d '{"providerAddress":"0x5555555555555555555555555555555555555555","deliveryText":"Delivery notes"}'
 ```
@@ -481,13 +480,13 @@ curl -X POST https://knowledge-exchange.fly.dev/api/requests/mcp-integration-for
 Example capabilities:
 
 ```bash
-curl https://knowledge-exchange.fly.dev/api/agent-capabilities
+curl https://kx-platform.fly.dev/api/agent-capabilities
 ```
 
 Example verify-payment request:
 
 ```bash
-curl -X POST https://knowledge-exchange.fly.dev/api/resources/credit-card-fraud-detection-benchmark-package/verify-payment \
+curl -X POST https://kx-platform.fly.dev/api/resources/credit-card-fraud-detection-benchmark-package/verify-payment \
   -H "Content-Type: application/json" \
   -d '{"txHash":"0x...","buyerAddress":"0x..."}'
 ```
@@ -539,17 +538,17 @@ Example downloadable resource response:
 
 ## Risk Intelligence
 
-Knowledge Exchange includes preview Risk Intelligence for humans, agents and organizations
+KX includes preview Risk Intelligence for humans, agents and organizations
 participating in paid knowledge commerce.
 
 Positioning:
 
-> Risk and reputation signals for humans, agents and organizations participating in Knowledge Exchange activity on Arc.
+> Risk and reputation signals for humans, agents and organizations participating in KX activity on Arc.
 
 Engine architecture:
 
 - `lib/server/risk-intelligence/types.ts` defines the canonical `RiskProfile` output.
-- `lib/server/risk-intelligence/calculateRiskProfile.ts` transforms Knowledge Exchange events into participant-aware profiles.
+- `lib/server/risk-intelligence/calculateRiskProfile.ts` transforms KX events into participant-aware profiles.
 - `lib/server/risk-intelligence/riskSignals.ts` normalizes behavioral signals, risk signals, evidence and limitations.
 - Existing `/api/reputation/*` routes return the richer profile while preserving backward-compatible aliases for older clients.
 
@@ -569,6 +568,9 @@ profiles through the public Risk Intelligence Service routes:
 
 ```txt
 GET /api/risk/profile/:wallet
+GET /api/risk/profile/:wallet?source=internal
+GET /api/risk/network/:wallet
+GET /api/risk/profile/:wallet?source=combined
 GET /api/risk/summary/:wallet
 GET /api/risk/signals/:wallet
 GET /api/risk/model
@@ -578,13 +580,54 @@ GET /api/risk/participants
 Compact summary example:
 
 ```bash
-curl https://knowledge-exchange.fly.dev/api/risk/summary/0x8e0a1111111111111111111111111111111125be
+curl https://kx-platform.fly.dev/api/risk/summary/0x8e0a1111111111111111111111111111111125be
 ```
 
-The `/api/risk/profile/:wallet` endpoint returns the full participant risk profile. The
+The `/api/risk/profile/:wallet` endpoint returns the full combined participant risk profile. The
+`source` query can select `internal`, `arc_network` or `combined`. The
+`/api/risk/network/:wallet` endpoint exposes the Arc Network Activity Adapter directly. It first
+tries to read Arcscan-compatible API counters for transactions, transfers, gas used and native USDC
+balance. Those counters are labeled as Arcscan API counters in the UI because explorer overview
+filters may differ from raw API counters. It also indexes ERC-20 USDC Transfer logs on demand for the requested wallet,
+caches snapshots in PostgreSQL when `DATABASE_URL` is configured, and returns transfer volume,
+counterparties, outgoing transfer gas used, last transfer activity and analyzed block range when
+those logs are available. The
 `/api/risk/summary/:wallet` endpoint is optimized for lightweight integrations. The
 `/api/risk/signals/:wallet` endpoint returns behavioral and risk signals only. Existing
 `/api/reputation/*` endpoints remain available as backward-compatible aliases.
+
+## KX SDK
+
+Builders can use the repository-local TypeScript SDK in `lib/sdk/kx/` to consume
+the same public API surface used by the web app.
+
+```ts
+import { KXClient } from "@/lib/sdk/kx";
+
+const client = new KXClient({
+  baseUrl: "https://kx-platform.fly.dev"
+});
+
+const resources = await client.searchResources({ agentConsumable: true });
+const payment = await client.getPaymentInstructions(resources.resources[0].id);
+const combinedProfile = await client.getCombinedProfile(payment.sellerAddress);
+const networkProfile = await client.getNetworkProfile(payment.sellerAddress);
+const risk = await client.evaluateTransactionRisk(payment.sellerAddress, {
+  maxRiskScore: 40,
+  allowedRiskTiers: ["Low", "Medium"],
+  minimumConfidenceLevel: "Medium",
+  unknownWalletBehavior: "review"
+});
+```
+
+The SDK covers marketplace resources, publish flows, HTTP 402 payment verification, unlocked
+resource retrieval, ratings, Requests, delivery metadata, Risk Intelligence and API capability
+discovery. It does not sign transactions or custody funds; wallet operations still require a wallet
+runtime such as MetaMask or an agent-controlled signer.
+
+- SDK source: `lib/sdk/kx/`
+- Integration guide: [`docs/kx-sdk.md`](docs/kx-sdk.md)
+- Examples: `examples/kx/`
 
 ## Risk Intelligence SDK
 
@@ -595,7 +638,7 @@ public Risk Intelligence Service from apps, scripts or autonomous agent workflow
 import { RiskIntelligenceClient } from "@/lib/sdk/risk-intelligence";
 
 const client = new RiskIntelligenceClient({
-  baseUrl: "https://knowledge-exchange.fly.dev"
+  baseUrl: "https://kx-platform.fly.dev"
 });
 
 const profile = await client.getProfile(wallet);
@@ -631,12 +674,12 @@ The API endpoint is:
 POST /api/risk/guard
 ```
 
-Risk Guard is based only on Knowledge Exchange activity. It is not AML, KYC, sanctions, fraud or
+Risk Guard is based only on KX activity. It is not AML, KYC, sanctions, fraud or
 compliance screening.
 
 ### Unknown wallets and no-data profiles
 
-Risk Intelligence is currently based on Knowledge Exchange activity. A wallet with no observed
+Risk Intelligence is currently based on KX activity. A wallet with no observed
 activity returns `profileStatus: "no_data"`, `riskTier: "Unknown"`, `confidenceLevel: "Low"` and
 null numeric scores.
 
@@ -666,15 +709,23 @@ if (decision.decision === "block") {
 
 Limitations:
 
-- Knowledge Exchange activity only.
+- Combined profiles use KX activity, Arcscan-compatible address counters when available and
+  on-demand Arc Testnet USDC transfer indexing.
+- Arc Network transfer-volume profiles are limited to the configured block window and are not
+  full-chain historical indexing yet.
 - Preview model.
 - Not an official Arc or Circle score.
 - No authentication or API keys yet.
 - No production-grade compliance screening.
 
-Planned next data source:
+Implemented network data source:
 
-- **Arc Network Activity Adapter**: future versions may optionally enrich profiles with Arc Testnet wallet activity signals beyond Knowledge Exchange events, such as wallet age, transaction count, unique counterparties, last network activity, contract interaction count, estimated USDC activity and network activity level.
+- **Arc Network Activity Adapter**: enriches profiles with Arcscan-compatible address counters and
+  on-demand Arc Testnet USDC Transfer logs for the requested wallet. It returns native USDC balance,
+  indexed transaction/transfer counters when available, sent/received USDC transfer volume, unique
+  counterparties, outgoing transfer gas used, last transfer activity and analyzed block range.
+  Future versions may add full-chain indexing, wallet age, broader contract interaction history and
+  richer network-wide USDC activity signals.
 
 The model is intentionally transparent. The financial behavior score starts at 500, adds points
 for successful payments, verified payments, downloads, escrow funding, submitted deliveries,
@@ -693,24 +744,46 @@ The API returns:
 
 Scope:
 
-- Based only on Knowledge Exchange activity.
+- Based on KX activity and limited Arc Testnet RPC activity when available.
 - Preview risk model.
 - Not an official Arc or Circle score.
 - Does not score all Arc wallets globally.
-- MVP storage is local or ephemeral.
+- Risk events are persisted in PostgreSQL when `DATABASE_URL` is configured.
+
+## PostgreSQL Persistence
+
+The public demo supports PostgreSQL through `DATABASE_URL`.
+
+Tables created automatically on first server access:
+
+- `resources`: public Instant Access resource metadata.
+- `requests`: API-created request drafts and delivery metadata.
+- `purchase_receipts`: verified Instant Access payment receipts.
+- `resource_ratings`: one rating per wallet per resource, including updates.
+- `risk_events`: KX activity events consumed by Risk Intelligence.
+- `participants`: wallet, agent, human and organization metadata derived from resources, requests and events.
+
+Seed behavior:
+
+- Curated marketplace resources from `services/resources.ts` are inserted with `ON CONFLICT DO NOTHING`.
+- Demo request drafts from the server request store are inserted with `ON CONFLICT DO NOTHING`.
+- Preview Risk Intelligence events are inserted with `ON CONFLICT DO NOTHING`.
+- Participant metadata is upserted from resource sellers, request participants and risk events.
+
+Without `DATABASE_URL`, the app keeps using in-memory preview storage so local development and CI remain simple.
 
 ## MVP Limitations
 
 - Runs on Arc Testnet only.
 - Not audited and not suitable for real funds.
 - Browser purchase receipts and unlock state use `localStorage`.
-- Browser-published resources are local to the current device.
-- Server-side resource publishing and uploaded files use ephemeral storage.
+- `localStorage` is used only for wallet-specific unlock UI state, immediate rating UX, and future draft UX.
+- Uploaded files still use local filesystem storage in this MVP.
 - File storage is local filesystem only; production should use R2, S3, Supabase Storage, IPFS, Arweave, or another access-controlled storage layer.
 - HTTP 402 verification is stateless and txHash-based.
 - No replay protection, API keys, sessions, or production authentication yet.
-- Ratings are MVP/local preview data and are not durable across browsers or devices.
-- Risk Intelligence signals are based only on Knowledge Exchange activity and are not official Arc or Circle scores.
+- Ratings are shared through PostgreSQL when `DATABASE_URL` is configured; without it they fall back to local/in-memory preview behavior.
+- Risk Intelligence combines KX activity with limited on-demand Arc Network USDC transfer indexing; it is not an official Arc or Circle score.
 - Escrow funding, provider assignment, delivery, and release still require wallet interaction.
 - Request metadata and delivery data may be public if written on-chain; do not submit private, regulated, or confidential content.
 
@@ -804,13 +877,18 @@ NEXT_PUBLIC_RPC_URL=https://rpc.testnet.arc.network
 NEXT_PUBLIC_WS_URL=wss://rpc.testnet.arc.network
 NEXT_PUBLIC_CHAIN_ID=5042002
 NEXT_PUBLIC_EXPLORER_URL=https://testnet.arcscan.app
+ARCSCAN_API_BASE_URL=https://testnet.arcscan.app/api/v2
 NEXT_PUBLIC_USDC_ADDRESS=0x3600000000000000000000000000000000000000
 NEXT_PUBLIC_ESCROW_CONTRACT=
+
+DATABASE_URL=
 
 PRIVATE_KEY=
 ```
 
 `PRIVATE_KEY` is only for local contract deployment. Never commit it, expose it in frontend code, upload it to GitHub, or set it on Fly.io unless you are intentionally running a private deployment job.
+
+`DATABASE_URL` enables shared PostgreSQL persistence for resources, request drafts, verified receipts, risk events and participant metadata. Leave it empty for local in-memory preview mode.
 
 ## Arc Testnet Configuration
 
@@ -881,13 +959,14 @@ The project includes `Dockerfile`, standalone Next.js output, and `fly.toml`.
 Required Fly secrets:
 
 ```bash
-fly secrets set NEXT_PUBLIC_APP_URL=https://knowledge-exchange.fly.dev
+fly secrets set NEXT_PUBLIC_APP_URL=https://kx-platform.fly.dev
 fly secrets set NEXT_PUBLIC_RPC_URL=https://rpc.testnet.arc.network
 fly secrets set NEXT_PUBLIC_WS_URL=wss://rpc.testnet.arc.network
 fly secrets set NEXT_PUBLIC_CHAIN_ID=5042002
 fly secrets set NEXT_PUBLIC_EXPLORER_URL=https://testnet.arcscan.app
 fly secrets set NEXT_PUBLIC_USDC_ADDRESS=0x3600000000000000000000000000000000000000
 fly secrets set NEXT_PUBLIC_ESCROW_CONTRACT=<deployed WorkEscrow address>
+fly secrets set DATABASE_URL=<postgres connection string>
 ```
 
 Build command:
@@ -953,7 +1032,7 @@ Requests:
 
 ## Roadmap
 
-- Planned: Arc Network Activity Adapter for optional Arc Testnet wallet activity signals beyond Knowledge Exchange events.
+- Arc-wide network activity indexer for wallet age, counterparties, historical contract interactions and richer USDC flow signals.
 - Arc-wide reputation layer.
 - Agent Risk Network.
 - Persistent reputation storage.

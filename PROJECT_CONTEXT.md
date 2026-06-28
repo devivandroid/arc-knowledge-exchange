@@ -1,24 +1,26 @@
 # Project Context
 
-## Knowledge Exchange
+## KX Platform
 
 **Human & Agent Commerce Platform**
 
-**The programmable trust and commerce layer for humans, autonomous agents and organizations.**
+**The programmable trust & commerce layer for humans, autonomous agents and organizations.**
 
-Knowledge Exchange is a commerce platform that enables participants to securely exchange services,
+KX, formerly Knowledge Exchange, is now positioned as KX Platform.
+
+KX Platform is a commerce platform that enables participants to securely exchange services,
 knowledge and work using USDC.
 
-Builders can use Knowledge Exchange to discover resources, protect transactions, evaluate
+Builders can use KX Platform to discover resources, protect transactions, evaluate
 participant risk, integrate programmable commerce APIs and build trusted workflows with the
-Knowledge Exchange SDK.
+KX SDK.
 
 ## Platform Positioning
 
-Knowledge Exchange is:
+KX Platform is:
 
 - a **Human & Agent Commerce Platform** for humans, autonomous agents and organizations
-- a **programmable trust and commerce layer** for USDC-based workflows
+- a **programmable trust & commerce layer** for USDC-based workflows
 - a **reusable platform for builders** integrating commerce, risk and agent-facing APIs
 
 ## Reference Application
@@ -35,5 +37,5 @@ The broader platform also includes:
 - **TypeScript SDK** for builder integrations and autonomous agent workflows
 - **Agent API** for HTTP 402 programmable commerce flows
 
-Knowledge Exchange is an independent project built on Arc Testnet. It is not affiliated with,
+KX Platform is an independent project built on Arc Testnet. It is not affiliated with,
 endorsed by, or officially supported by Circle or Arc.

@@ -1,6 +1,6 @@
 import { PageHeader } from "@/components/PageHeader";
 import { PageShell } from "@/components/PageShell";
-import { getEvents } from "@/lib/server/reputation/reputationEventStore";
+import { getEventsAsync } from "@/lib/server/reputation/reputationEventStore";
 import { maskWallet } from "@/lib/server/reputation/reputationResponse";
 import { ReputationLookup } from "@/app/reputation/ReputationLookup";
 import { getAppBaseUrl } from "@/lib/getAppBaseUrl";
@@ -29,9 +29,9 @@ function getParticipantDisplay(profile: RiskProfile): string {
   return profile.participant.name ? `${profile.participant.name} - ${type}` : type;
 }
 
-export default function ReputationPage() {
+export default async function ReputationPage() {
   const appBaseUrl = getAppBaseUrl();
-  const events = getEvents();
+  const events = await getEventsAsync();
   const profiles = getUniqueRiskWallets(events)
     .map((wallet) => calculateRiskProfile(wallet, events))
     .sort(
@@ -50,7 +50,7 @@ export default function ReputationPage() {
       <PageHeader
         eyebrow="Risk Intelligence"
         title="Risk Intelligence"
-        description="Risk and reputation signals for humans, agents and organizations participating in Knowledge Exchange activity on Arc."
+        description="Risk and reputation signals for humans, agents and organizations participating in KX activity on Arc."
       />
 
       <div className="grid gap-4 md:grid-cols-4">
@@ -111,8 +111,9 @@ export default function ReputationPage() {
       <section className="mt-6 rounded-lg border border-arc-border bg-arc-panel/80 p-5">
         <h2 className="text-xl font-semibold text-white">Participant risk profiles</h2>
         <p className="mt-2 text-sm leading-6 text-slate-400">
-          Participant-aware risk profiles based only on Knowledge Exchange activity. This is not an
-          official Arc or Circle score and does not score all Arc wallets.
+          Participant-aware risk profiles based on KX activity and optional Arc
+          Testnet RPC signals. This is not an official Arc or Circle score and does not score all
+          Arc wallets.
         </p>
         <div className="mt-4 overflow-hidden rounded-lg border border-arc-border">
           {profiles.map((profile) => (
@@ -172,11 +173,15 @@ export default function ReputationPage() {
         <div className="rounded-lg border border-arc-border bg-arc-panel/80 p-5">
           <h2 className="text-xl font-semibold text-white">Risk Intelligence API Documentation</h2>
           <p className="mt-2 text-sm leading-6 text-slate-400">
-            Builders, human operators and AI agents can query a Risk Intelligence profile, inspect recent
-            marketplace activity, participant context, behavioral signals and model methodology.
+            Builders, human operators and AI agents can query Internal, Arc Network or Combined
+            Risk Intelligence profiles, inspect marketplace activity, participant context,
+            behavioral signals and model methodology.
           </p>
           <pre className="mt-3 overflow-x-auto rounded-lg bg-black/40 p-3 text-xs leading-6 text-slate-300">
             {`curl ${appBaseUrl}/api/risk/profile/0x...
+curl ${appBaseUrl}/api/risk/profile/0x...?source=internal
+curl ${appBaseUrl}/api/risk/network/0x...
+curl ${appBaseUrl}/api/risk/profile/0x...?source=combined
 curl ${appBaseUrl}/api/risk/summary/0x...
 curl ${appBaseUrl}/api/risk/signals/0x...
 curl ${appBaseUrl}/api/risk/model
@@ -200,7 +205,7 @@ const summary = await client.getSummary(wallet);`}
             <p className="text-sm font-semibold text-white">Risk Guard</p>
             <p className="mt-2 text-xs leading-5 text-slate-400">
               Apps and agents can apply their own risk policy before transacting. Risk Guard is not
-              compliance screening; it is a pre-transaction helper based on Knowledge Exchange activity.
+              compliance screening; it is a pre-transaction helper based on KX activity.
             </p>
             <pre className="mt-3 overflow-x-auto rounded-lg bg-black/40 p-3 text-xs leading-6 text-slate-300">
               {`await client.canTransactWith(wallet, {
@@ -214,19 +219,18 @@ const summary = await client.getSummary(wallet);`}
           <div className="mt-4 rounded-lg border border-sky-300/25 bg-sky-300/10 p-3">
             <p className="text-sm font-semibold text-sky-100">Unknown wallets and no-data profiles</p>
             <p className="mt-2 text-xs leading-5 text-slate-300">
-              A wallet with no Knowledge Exchange activity returns profileStatus = no_data,
+              A wallet with no KX activity returns profileStatus = no_data,
               riskTier = Unknown and null numeric scores. No data is not high risk. Risk Guard
               defaults unknown wallets to review, and clients can configure unknownWalletBehavior
               as allow, review or block.
             </p>
           </div>
           <p className="mt-3 rounded-lg border border-amber-300/30 bg-amber-300/10 p-3 text-sm leading-6 text-amber-100">
-            Scope limitation: this is a preview risk model based on Knowledge Exchange activity
-            only. It is not an official Arc or Circle score and does not score all Arc wallets.
-            Planned: Arc Network Activity Adapter may add optional Arc Testnet wallet activity
-            signals such as wallet age, transaction count, unique counterparties, last network
-            activity, contract interaction count, estimated USDC activity and network activity
-            level.
+            Scope limitation: this is a preview risk model based on KX activity and
+            limited Arc Testnet RPC signals when available. It is not an official Arc or Circle
+            score, does not score all Arc wallets and is not AML/KYC/compliance screening. The
+            current Arc Network adapter does not include a full indexer, so wallet age, unique
+            counterparties and detailed historical contract interactions remain roadmap items.
           </p>
         </div>
       </section>

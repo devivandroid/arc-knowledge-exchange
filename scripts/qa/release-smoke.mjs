@@ -67,10 +67,30 @@ await test("GET /api/agent-capabilities exposes Arc metadata", async () => {
     body.capabilities?.some((capability) => capability.id === "downloadable_assets"),
     "missing downloadable assets capability"
   );
+  assert(
+    body.capabilities?.some((capability) => capability.id === "get_resource_ratings"),
+    "missing resource ratings capability"
+  );
+  assert(
+    body.capabilities?.some((capability) => capability.id === "rate_resource"),
+    "missing rate resource capability"
+  );
+  assert(
+    body.sdk?.repositoryPath === "lib/sdk/kx",
+    "missing KX SDK metadata"
+  );
   assert(body.risk_intelligence === true, "missing risk_intelligence flag");
   assert(
     body.risk_profile_endpoint === "/api/risk/profile/{wallet}",
     "missing public risk profile endpoint"
+  );
+  assert(
+    body.risk_network_profile_endpoint === "/api/risk/network/{wallet}",
+    "missing public risk network endpoint"
+  );
+  assert(
+    body.capabilities?.some((capability) => capability.id === "query_arc_network_risk"),
+    "missing Arc Network risk capability"
   );
   assert(body.participant_risk_profiles === true, "missing participant risk profiles flag");
   assert(body.behavioral_signals === true, "missing behavioral signals flag");
@@ -106,7 +126,7 @@ await test("GET /api/reputation/[wallet] returns wallet score", async () => {
     "/api/reputation/0x8e0a1111111111111111111111111111111125be"
   );
   assert(response.status === 200, `expected 200, got ${response.status}`);
-  assert(body.scope === "Knowledge Exchange activity only", "wrong reputation scope");
+  assert(body.scope === "KX activity only", "wrong reputation scope");
   assert(typeof body.reputationScore === "number", "missing reputation score");
 });
 
@@ -120,7 +140,7 @@ await test("GET /api/reputation/events returns masked recent events", async () =
 await test("GET /api/reputation/model returns methodology", async () => {
   const { response, body } = await request("/api/reputation/model");
   assert(response.status === 200, `expected 200, got ${response.status}`);
-  assert(body.scope === "Knowledge Exchange activity only", "wrong model scope");
+  assert(body.scope === "KX activity only", "wrong model scope");
   assert(body.scoring?.startingScore === 500, "missing starting score");
 });
 
@@ -129,11 +149,33 @@ await test("GET /api/risk/profile/[wallet] returns full RiskProfile", async () =
     "/api/risk/profile/0x8e0a1111111111111111111111111111111125be"
   );
   assert(response.status === 200, `expected 200, got ${response.status}`);
-  assert(body.service === "Knowledge Exchange Public Risk Intelligence Service", "wrong service");
-  assert(body.scope === "Knowledge Exchange activity only", "wrong risk scope");
+  assert(body.service === "KX Public Risk Intelligence Service", "wrong service");
+  assert(body.dataSource, "missing dataSource");
   assert(typeof body.scores?.financialBehaviorScore === "number", "missing behavior score");
   assert(Array.isArray(body.behavioralSignals), "missing behavioral signals");
   assert(Array.isArray(body.riskSignals), "missing risk signals");
+});
+
+await test("GET /api/risk/network/[wallet] returns Arc Network profile", async () => {
+  const { response, body } = await request(
+    "/api/risk/network/0x8e0a1111111111111111111111111111111125be"
+  );
+  assert(response.status === 200, `expected 200, got ${response.status}`);
+  assert(["arc_network", "no_data"].includes(body.dataSource), "wrong network dataSource");
+  assert(body.network === "Arc Testnet", "wrong network");
+  assert(Array.isArray(body.riskSignals), "missing network risk signals");
+});
+
+await test("GET /api/risk/profile source=combined returns combined-compatible profile", async () => {
+  const { response, body } = await request(
+    "/api/risk/profile/0x8e0a1111111111111111111111111111111125be?source=combined"
+  );
+  assert(response.status === 200, `expected 200, got ${response.status}`);
+  assert(
+    ["combined", "knowledge_exchange", "arc_network", "no_data"].includes(body.dataSource),
+    "wrong combined dataSource"
+  );
+  assert(body.scores, "missing scores");
 });
 
 await test("GET /api/risk/summary/[wallet] returns compact summary", async () => {
@@ -158,7 +200,7 @@ await test("GET /api/risk/signals/[wallet] returns signals", async () => {
 await test("GET /api/risk/model returns public methodology", async () => {
   const { response, body } = await request("/api/risk/model");
   assert(response.status === 200, `expected 200, got ${response.status}`);
-  assert(body.service === "Knowledge Exchange Public Risk Intelligence Service", "wrong service");
+  assert(body.service === "KX Public Risk Intelligence Service", "wrong service");
   assert(body.scoring?.financialBehaviorScore?.startingScore === 500, "missing starting score");
 });
 
@@ -196,7 +238,7 @@ await test("GET /api/risk/signals unknown wallet returns informational no-data s
   assert(body.profileStatus === "no_data", "expected profileStatus=no_data");
   assert(Array.isArray(body.behavioralSignals), "missing behavioral signals");
   assert(body.behavioralSignals.length === 0, "expected no behavioral signals");
-  assert(body.riskSignals?.[0]?.label === "No Knowledge Exchange activity", "missing no-data signal");
+  assert(body.riskSignals?.[0]?.label === "No KX activity", "missing no-data signal");
   assert(body.riskSignals?.[0]?.severity === "Info", "no-data signal should be informational");
 });
 
@@ -299,6 +341,27 @@ await test("GET /api/resources/[id] returns HTTP 402 payment instructions", asyn
     "missing verification endpoint"
   );
   assert(hasNoStackTrace(body), "response leaked stack trace");
+});
+
+await test("GET /api/resources/[id]/ratings returns rating summary", async () => {
+  const { response, body } = await request(`/api/resources/${downloadableResourceId}/ratings`);
+  assert(response.status === 200, `expected 200, got ${response.status}`);
+  assert(body.ok === true, "expected ok=true");
+  assert(body.summary?.count >= 1, "expected seeded ratings");
+  assert(body.summary?.average >= 1, "expected average rating");
+});
+
+await test("POST /api/resources/[id]/ratings upserts wallet rating", async () => {
+  const walletAddress = "0x5555555555555555555555555555555555555555";
+  const { response, body } = await request(`/api/resources/${validResourceId}/ratings`, {
+    method: "POST",
+    body: JSON.stringify({ walletAddress, rating: 4 })
+  });
+  assert(response.status === 201, `expected 201, got ${response.status}`);
+  assert(body.ok === true, "expected ok=true");
+  assert(body.rating?.walletAddress === walletAddress.toLowerCase(), "wallet mismatch");
+  assert(body.rating?.rating === 4, "rating mismatch");
+  assert(body.summary?.count >= 1, "missing summary");
 });
 
 await test("GET downloadable resource exposes file metadata", async () => {

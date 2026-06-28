@@ -64,6 +64,14 @@ export class RiskIntelligenceClient {
     return this.get(`/api/risk/profile/${encodeURIComponent(wallet)}`);
   }
 
+  getCombinedProfile(wallet: string): Promise<RiskProfileResponse> {
+    return this.get(`/api/risk/profile/${encodeURIComponent(wallet)}?source=combined`);
+  }
+
+  getNetworkProfile(wallet: string): Promise<RiskProfileResponse> {
+    return this.get(`/api/risk/network/${encodeURIComponent(wallet)}`);
+  }
+
   getSummary(wallet: string): Promise<RiskSummaryResponse> {
     return this.get(`/api/risk/summary/${encodeURIComponent(wallet)}`);
   }

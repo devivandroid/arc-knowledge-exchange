@@ -1,11 +1,11 @@
-app = "knowledge-exchange"
+app = "kx-platform"
 primary_region = "dfw"
 
 [build]
   dockerfile = "Dockerfile"
 
   [build.args]
-    NEXT_PUBLIC_APP_URL = "https://knowledge-exchange.fly.dev"
+    NEXT_PUBLIC_APP_URL = "https://kx-platform.fly.dev"
     NEXT_PUBLIC_RPC_URL = "https://rpc.testnet.arc.network"
     NEXT_PUBLIC_CHAIN_ID = "5042002"
     NEXT_PUBLIC_EXPLORER_URL = "https://testnet.arcscan.app"
@@ -15,7 +15,7 @@ primary_region = "dfw"
 [env]
   PORT = "3000"
   NODE_ENV = "production"
-  NEXT_PUBLIC_APP_URL = "https://knowledge-exchange.fly.dev"
+  NEXT_PUBLIC_APP_URL = "https://kx-platform.fly.dev"
   NEXT_PUBLIC_RPC_URL = "https://rpc.testnet.arc.network"
   NEXT_PUBLIC_CHAIN_ID = "5042002"
   NEXT_PUBLIC_EXPLORER_URL = "https://testnet.arcscan.app"

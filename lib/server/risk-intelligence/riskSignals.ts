@@ -6,7 +6,7 @@ import type {
 } from "@/lib/server/risk-intelligence/types";
 
 export const riskIntelligenceLimitations = [
-  "Based only on Knowledge Exchange events",
+  "Based only on KX events",
   "Not an official Arc or Circle score",
   "Preview Risk Intelligence model",
   "Does not score all Arc wallets globally",
@@ -26,14 +26,14 @@ export function describeBehaviorSignal(label: string): string {
     "Purchase abandonment": "Share of purchase starts without a matching completion event.",
     "Escrow completion rate": "Share of funded protected transactions that reached funds released.",
     "Download-after-purchase rate": "Share of purchased resources followed by a download event.",
-    "Counterparty diversity": "Number of unique counterparties observed in Knowledge Exchange events.",
-    "Activity recency": "How recently this participant generated Knowledge Exchange activity.",
+    "Counterparty diversity": "Number of unique counterparties observed in KX events.",
+    "Activity recency": "How recently this participant generated KX activity.",
     "Activity velocity": "Observed event frequency over the active window.",
     "Volume concentration": "Share of completed volume concentrated with the largest counterparty.",
     "Evidence count": "Number of events supporting this preview profile."
   };
 
-  return descriptions[label] ?? "Derived from Knowledge Exchange preview events.";
+  return descriptions[label] ?? "Derived from KX preview events.";
 }
 
 export function toRiskProfile(summary: ReputationSummary): RiskProfile {
@@ -44,7 +44,7 @@ export function toRiskProfile(summary: ReputationSummary): RiskProfile {
       : summary.confidenceLevel === "Low"
         ? "limited"
         : "active";
-  const noDataMessage = "No Knowledge Exchange activity was found for this wallet.";
+  const noDataMessage = "No KX activity was found for this wallet.";
   const noDataRecommendation =
     "Missing data is not negative evidence. Apply your own policy or request additional verification before transacting.";
   const isNoData = profileStatus === "no_data";
@@ -93,7 +93,7 @@ export function toRiskProfile(summary: ReputationSummary): RiskProfile {
     riskSignals: isNoData
       ? [
           {
-            label: "No Knowledge Exchange activity",
+            label: "No KX activity",
             severity: "Info",
             description: "Missing data is not negative evidence."
           }

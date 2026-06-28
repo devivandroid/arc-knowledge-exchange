@@ -1,6 +1,9 @@
 import { isAddress } from "ethers";
 import { NextResponse, type NextRequest } from "next/server";
-import { getRecentEvents, trackReputationEvent } from "@/lib/server/reputation/reputationEventStore";
+import {
+  getRecentEventsAsync,
+  trackReputationEventAsync
+} from "@/lib/server/reputation/reputationEventStore";
 import { maskWallet } from "@/lib/server/reputation/reputationResponse";
 import type { ReputationEventType } from "@/types/reputation";
 
@@ -8,6 +11,7 @@ const allowedEventTypes: ReputationEventType[] = [
   "RESOURCE_VIEWED",
   "RESOURCE_PURCHASE_STARTED",
   "RESOURCE_PURCHASED",
+  "RESOURCE_SOLD",
   "PAYMENT_VERIFIED",
   "RESOURCE_DOWNLOADED",
   "REQUEST_CREATED",
@@ -26,7 +30,7 @@ export async function GET(request: NextRequest) {
   const limit = Number(request.nextUrl.searchParams.get("limit") || 25);
   return NextResponse.json({
     ok: true,
-    events: getRecentEvents(limit).map((event) => ({
+    events: (await getRecentEventsAsync(limit)).map((event) => ({
       ...event,
       walletAddress: maskWallet(event.walletAddress),
       counterpartyAddress: event.counterpartyAddress
@@ -54,7 +58,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ok: false, error: "INVALID_EVENT_TYPE" }, { status: 400 });
   }
 
-  const event = trackReputationEvent({
+  const event = await trackReputationEventAsync({
     walletAddress: body.walletAddress,
     counterpartyAddress:
       typeof body.counterpartyAddress === "string" && isAddress(body.counterpartyAddress)

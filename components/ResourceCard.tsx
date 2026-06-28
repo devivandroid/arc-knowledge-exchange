@@ -21,6 +21,23 @@ export function ResourceCard({ resource }: ResourceCardProps) {
   useEffect(() => {
     setPurchased(hasPurchased(address, resource.id));
     setRatingSummary(getRatingSummary(resource.id));
+
+    let cancelled = false;
+
+    async function loadRatingSummary() {
+      const response = await fetch(`/api/resources/${resource.id}/ratings`);
+      const body = (await response.json()) as { summary?: RatingSummary };
+
+      if (!cancelled && body.summary) {
+        setRatingSummary(body.summary);
+      }
+    }
+
+    loadRatingSummary().catch(() => undefined);
+
+    return () => {
+      cancelled = true;
+    };
   }, [address, resource.id]);
 
   return (

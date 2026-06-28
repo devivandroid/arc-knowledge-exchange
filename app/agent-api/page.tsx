@@ -32,9 +32,9 @@ export default function AgentApiPage() {
   return (
     <PageShell>
       <PageHeader
-        eyebrow="Agent API"
+        eyebrow="KX APIs"
         title="Agent API"
-        description="Integration guide for autonomous clients that discover priced resources, receive HTTP 402 payment instructions, verify USDC receipts, and retrieve structured knowledge payloads."
+        description="KX API documentation for autonomous clients that discover priced resources, receive HTTP 402 payment instructions, verify USDC receipts, and retrieve structured payloads."
       />
 
       <section className="grid min-w-0 gap-5 lg:grid-cols-[minmax(0,1fr)_22rem]">

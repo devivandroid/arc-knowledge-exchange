@@ -1,8 +1,8 @@
 import { isAddress } from "ethers";
 import { NextResponse, type NextRequest } from "next/server";
 import { isParticipantType } from "@/lib/participants";
-import { createServerRequest, isLicenseType, parseTags } from "@/lib/server/agentMockStore";
-import { trackReputationEvent } from "@/lib/server/reputation/reputationEventStore";
+import { createServerRequestAsync, isLicenseType, parseTags } from "@/lib/server/agentMockStore";
+import { trackReputationEventAsync } from "@/lib/server/reputation/reputationEventStore";
 import { isValidUsdcAmount } from "@/lib/validateUsdcAmount";
 
 export const runtime = "nodejs";
@@ -68,7 +68,7 @@ export async function POST(request: NextRequest) {
       ? body.operatorAddress.trim()
       : undefined;
 
-  const draft = createServerRequest({
+  const draft = await createServerRequestAsync({
     title: String(body.title),
     description: String(body.description),
     requirements: String(body.requirements),
@@ -83,7 +83,7 @@ export async function POST(request: NextRequest) {
     agentConsumable: Boolean(body.agentConsumable)
   });
 
-  trackReputationEvent({
+  await trackReputationEventAsync({
     walletAddress: requesterAddress,
     eventType: "REQUEST_CREATED",
     requestId: draft.id,

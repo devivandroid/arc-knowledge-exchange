@@ -35,10 +35,10 @@ const walkthroughFlows = [
   {
     title: "Risk Intelligence",
     description:
-      "Apps and agents query preview risk signals based on Knowledge Exchange activity.",
+      "Apps and agents query preview risk signals based on KX activity.",
     steps: [
       "A wallet buys resources, verifies payments, downloads files, or participates in requests.",
-      "Knowledge Exchange records lightweight marketplace events.",
+      "KX records lightweight marketplace events.",
       "The preview model calculates reputation signals, financial behavior score, risk tier, confidence, and evidence count.",
       "Builders query /api/risk/profile/{wallet}, /api/risk/summary/{wallet}, /api/risk/signals/{wallet}, or /api/risk/model.",
       "Risk results can route high-risk wallets to manual review."

@@ -10,6 +10,7 @@ import type {
 
 const positiveEvents = new Set([
   "RESOURCE_PURCHASED",
+  "RESOURCE_SOLD",
   "PAYMENT_VERIFIED",
   "RESOURCE_DOWNLOADED",
   "ESCROW_FUNDED",
@@ -111,7 +112,7 @@ function buildEmptySummary(
       {
         label: "Limited evidence",
         severity: "Low confidence",
-        description: "Risk profile has no Knowledge Exchange activity yet."
+        description: "Risk profile has no KX activity yet."
       }
     ]
   };
@@ -137,7 +138,7 @@ export function calculateReputation(wallet: string, events: ReputationEvent[]): 
       : undefined;
   const evidenceCount = walletEvents.length;
   const successfulPayments = walletEvents.filter((event) =>
-    ["RESOURCE_PURCHASED", "PAYMENT_VERIFIED", "FUNDS_RELEASED"].includes(event.eventType)
+    ["RESOURCE_PURCHASED", "RESOURCE_SOLD", "PAYMENT_VERIFIED", "FUNDS_RELEASED"].includes(event.eventType)
   ).length;
   const failedPayments = walletEvents.filter(
     (event) => event.eventType === "REQUEST_CANCELLED" || event.eventType === "RESOURCE_PURCHASE_STARTED"
@@ -150,7 +151,7 @@ export function calculateReputation(wallet: string, events: ReputationEvent[]): 
   ).length;
   const incompletePurchases = Math.max(0, startedPurchases - completedPurchases);
   const completedVolumeEvents = walletEvents.filter((event) =>
-    ["RESOURCE_PURCHASED", "FUNDS_RELEASED"].includes(event.eventType)
+    ["RESOURCE_PURCHASED", "RESOURCE_SOLD", "FUNDS_RELEASED"].includes(event.eventType)
   );
   const totalCompletedVolume = completedVolumeEvents.reduce(
     (sum, event) => sum + toNumber(event.amountUSDC),
@@ -333,7 +334,7 @@ export function calculateReputation(wallet: string, events: ReputationEvent[]): 
     pushRisk(
       "Limited evidence",
       "Low confidence",
-      "Risk profile is based on fewer than 5 Knowledge Exchange events."
+      "Risk profile is based on fewer than 5 KX events."
     );
   }
   if (purchaseStartAbandonmentRate >= 0.5) {
@@ -367,7 +368,7 @@ export function calculateReputation(wallet: string, events: ReputationEvent[]): 
     pushRisk(
       "Dormant participant",
       "Monitor",
-      "No recent Knowledge Exchange activity is available for this wallet."
+      "No recent KX activity is available for this wallet."
     );
   }
   if (averageActionsPerDay > 5) {
@@ -388,7 +389,7 @@ export function calculateReputation(wallet: string, events: ReputationEvent[]): 
     pushRisk(
       "No elevated review signals",
       "Monitor",
-      "No elevated review signals were detected in the current Knowledge Exchange history."
+      "No elevated review signals were detected in the current KX history."
     );
   }
 

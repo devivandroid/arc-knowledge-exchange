@@ -11,7 +11,6 @@ import { TransactionStatus, type TransactionState } from "@/components/Transacti
 import { useUsdc } from "@/hooks/useUsdc";
 import { useWallet } from "@/hooks/useWallet";
 import { usdcDecimals } from "@/lib/contracts/microWorkEscrow";
-import { getResourceById } from "@/lib/localResources";
 import { getParticipantBadgeClass, getParticipantLabel } from "@/lib/participants";
 import { getPurchases, savePurchase, type InstantAccessPurchase } from "@/lib/purchases";
 import {
@@ -138,7 +137,7 @@ export function ResourceDetailClient({ initialResource, resourceId }: ResourceDe
     resource?.participantName ?? resource?.sellerName ?? "Independent Creator";
 
   useEffect(() => {
-    setResource(getResourceById(resourceId) ?? initialResource);
+    setResource(initialResource);
   }, [initialResource, resourceId]);
 
   useEffect(() => {
@@ -163,9 +162,33 @@ export function ResourceDetailClient({ initialResource, resourceId }: ResourceDe
       return;
     }
 
-    setRatingSummary(getRatingSummary(resource.id));
-    setUserRating(getUserRating(address, resource.id));
+    const currentResource = resource;
+
+    setRatingSummary(getRatingSummary(currentResource.id));
+    setUserRating(getUserRating(address, currentResource.id));
     setRatingSaved(false);
+
+    let cancelled = false;
+
+    async function loadRatings() {
+      const query = address ? `?walletAddress=${encodeURIComponent(address)}` : "";
+      const response = await fetch(`/api/resources/${currentResource.id}/ratings${query}`);
+      const body = (await response.json()) as {
+        summary?: RatingSummary;
+        userRating?: ResourceRating | null;
+      };
+
+      if (!cancelled) {
+        if (body.summary) setRatingSummary(body.summary);
+        if (body.userRating !== undefined) setUserRating(body.userRating);
+      }
+    }
+
+    loadRatings().catch(() => undefined);
+
+    return () => {
+      cancelled = true;
+    };
   }, [address, purchase, resource]);
 
   if (!resource) {
@@ -176,7 +199,7 @@ export function ResourceDetailClient({ initialResource, resourceId }: ResourceDe
             Resource not found
           </p>
           <p className="mt-3 text-sm leading-6 text-slate-400">
-            This resource is not in the bundled catalog or this browser&apos;s local catalog.
+            This resource is not in the public catalog.
           </p>
           <Link
             href="/marketplace"
@@ -266,7 +289,7 @@ export function ResourceDetailClient({ initialResource, resourceId }: ResourceDe
     }
   };
 
-  const handleRatingChange = (rating: number) => {
+  const handleRatingChange = async (rating: number) => {
     if (!address || !resource || !purchase) {
       return;
     }
@@ -280,6 +303,33 @@ export function ResourceDetailClient({ initialResource, resourceId }: ResourceDe
     setUserRating(savedRating);
     setRatingSummary(getRatingSummary(resource.id));
     setRatingSaved(true);
+
+    try {
+      const response = await fetch(`/api/resources/${resource.id}/ratings`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ walletAddress: address, rating })
+      });
+      const body = (await response.json()) as {
+        rating?: ResourceRating;
+        summary?: RatingSummary;
+        message?: string;
+        error?: string;
+      };
+
+      if (!response.ok || !body.rating || !body.summary) {
+        throw new Error(body.message || body.error || "Rating could not be saved.");
+      }
+
+      setUserRating(body.rating);
+      setRatingSummary(body.summary);
+    } catch {
+      setTxState({
+        phase: "error",
+        message:
+          "Your rating was saved in this browser, but it could not be synced to the shared database."
+      });
+    }
   };
 
   return (
@@ -394,7 +444,7 @@ export function ResourceDetailClient({ initialResource, resourceId }: ResourceDe
               <div>
                 <p className="text-sm font-semibold text-white">Resource rating</p>
                 <p className="mt-1 text-xs leading-5 text-slate-500">
-                  Ratings are based on Knowledge Exchange activity.
+                  Ratings are based on KX activity.
                 </p>
               </div>
               <div className="flex items-center gap-3 text-sm text-slate-300">
@@ -548,8 +598,8 @@ ${getAgentPreviewPayload(resource)}`}
               </>
             ) : (
               <p className="mt-3 rounded-lg border border-amber-300/30 bg-amber-300/10 p-3 text-sm leading-6 text-amber-100">
-                This resource was published into browser localStorage. The Agent API cannot serve it
-                until backend persistence is added.
+                This resource is served by the public catalog API when backend persistence is
+                configured.
               </p>
             )}
           </div>

@@ -1,6 +1,6 @@
 import { RiskIntelligenceClient } from "../../lib/sdk/risk-intelligence";
 
-const baseUrl = process.env.RISK_API_BASE_URL ?? "https://knowledge-exchange.fly.dev";
+const baseUrl = process.env.RISK_API_BASE_URL ?? "https://kx-platform.fly.dev";
 const sellerWallet =
   process.env.SELLER_WALLET ?? "0x8e0a1111111111111111111111111111111125be";
 
@@ -25,7 +25,7 @@ console.log({
   agentDecision: shouldEscalate ? "route_to_human_review" : "proceed_with_payment_flow",
   reason: shouldEscalate
     ? hasNoData
-      ? "No Knowledge Exchange activity was found. No data is not high risk, but review is safer before autonomous payment."
+      ? "No KX activity was found. No data is not high risk, but review is safer before autonomous payment."
       : "Elevated risk signal or high risk tier detected."
     : "No elevated risk signal detected in the preview profile."
 });

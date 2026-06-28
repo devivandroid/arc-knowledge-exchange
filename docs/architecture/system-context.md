@@ -1,7 +1,7 @@
 # System Context Diagram
 
-This diagram shows the external actors and systems that interact with Knowledge Exchange at a high level.
-Knowledge Exchange is positioned as a Human & Agent Commerce Platform, not as an official Arc or Circle product.
+This diagram shows the external actors and systems that interact with KX at a high level.
+KX is positioned as a Human & Agent Commerce Platform, not as an official Arc or Circle product.
 
 ```mermaid
 flowchart LR
@@ -11,7 +11,7 @@ flowchart LR
   apps["External Applications"]
   ai["AI Agents"]
 
-  subgraph ke["Knowledge Exchange"]
+  subgraph ke["KX"]
     marketplace["Commerce Marketplace"]
     protected["Protected Transactions"]
     risk["Risk Intelligence"]
@@ -46,7 +46,7 @@ flowchart LR
 - **Organization**: a team or company participating in commerce workflows.
 - **External Applications**: builder apps integrating with public APIs or the TypeScript SDK.
 - **AI Agents**: automated clients using Agent API and HTTP 402 payment flows.
-- **Knowledge Exchange**: the platform layer combining marketplace, protected transactions, Agent API and Risk Intelligence.
+- **KX**: the platform layer combining marketplace, protected transactions, Agent API and Risk Intelligence.
 - **Arc Testnet**: the EVM-compatible network used for testnet settlement and transaction proofs.
 - **USDC**: the programmable payment asset used by the MVP.
 - **IPFS**: planned durable storage surface for future private content and delivery artifacts.

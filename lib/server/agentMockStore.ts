@@ -1,5 +1,6 @@
 import { keccak256, toUtf8Bytes } from "ethers";
 import { createLocalResourceId } from "@/lib/localResources";
+import { isPostgresEnabled, pgQuery, upsertParticipant } from "@/lib/server/postgres";
 import { getInstantResources } from "@/services/resources";
 import {
   licenseValues,
@@ -46,13 +47,16 @@ type Store = {
   requests: AgentRequestDraft[];
 };
 
+let resourcesSeededPromise: Promise<void> | null = null;
+let requestsSeededPromise: Promise<void> | null = null;
+
 const globalStore = globalThis as typeof globalThis & {
-  arcKnowledgeExchangeAgentStore?: Store;
+  kxPlatformAgentStore?: Store;
 };
 
 function getStore(): Store {
-  if (!globalStore.arcKnowledgeExchangeAgentStore) {
-    globalStore.arcKnowledgeExchangeAgentStore = {
+  if (!globalStore.kxPlatformAgentStore) {
+    globalStore.kxPlatformAgentStore = {
       resources: [],
       requests: [
         {
@@ -172,7 +176,7 @@ function getStore(): Store {
     };
   }
 
-  return globalStore.arcKnowledgeExchangeAgentStore;
+  return globalStore.kxPlatformAgentStore;
 }
 
 export function getServerResources(): InstantResource[] {
@@ -183,8 +187,83 @@ export function getServerResources(): InstantResource[] {
   return [...published.filter((resource) => !bundledIds.has(resource.id)), ...bundled];
 }
 
+async function ensureDbResourcesSeeded() {
+  if (!isPostgresEnabled()) return;
+
+  resourcesSeededPromise ??= (async () => {
+    for (const resource of getInstantResources()) {
+      await pgQuery(
+        `
+          INSERT INTO resources (id, data, created_at, updated_at)
+          VALUES ($1, $2::jsonb, NOW(), NOW())
+          ON CONFLICT (id) DO NOTHING
+        `,
+        [resource.id, JSON.stringify(resource)]
+      );
+      await upsertParticipant({
+        walletAddress: resource.sellerAddress,
+        participantType: resource.participantType ?? null,
+        participantName: resource.participantName ?? resource.sellerName ?? null,
+        operatorAddress: resource.operatorAddress ?? null,
+        data: { source: "resource_seed", resourceId: resource.id }
+      });
+    }
+  })();
+
+  await resourcesSeededPromise;
+}
+
+async function ensureDbRequestsSeeded() {
+  if (!isPostgresEnabled()) return;
+
+  requestsSeededPromise ??= (async () => {
+    for (const request of getStore().requests) {
+      await pgQuery(
+        `
+          INSERT INTO requests (id, data, created_at, updated_at)
+          VALUES ($1, $2::jsonb, $3::timestamptz, NOW())
+          ON CONFLICT (id) DO NOTHING
+        `,
+        [request.id, JSON.stringify(request), request.createdAt]
+      );
+      await upsertParticipant({
+        walletAddress: request.requesterAddress,
+        participantType: request.participantType ?? null,
+        participantName: request.participantName ?? null,
+        operatorAddress: request.operatorAddress ?? null,
+        data: { source: "request_seed", requestId: request.id }
+      });
+    }
+  })();
+
+  await requestsSeededPromise;
+}
+
+export async function getServerResourcesAsync(): Promise<InstantResource[]> {
+  if (!isPostgresEnabled()) return getServerResources();
+
+  await ensureDbResourcesSeeded();
+  const rows = await pgQuery<{ data: InstantResource }>(
+    "SELECT data FROM resources ORDER BY COALESCE((data->>'featured')::boolean, false) DESC, created_at DESC"
+  );
+  return rows.map((row) => row.data);
+}
+
 export function getServerResourceById(id: string): InstantResource | undefined {
   return getServerResources().find((resource) => resource.id === id);
+}
+
+export async function getServerResourceByIdAsync(
+  id: string
+): Promise<InstantResource | undefined> {
+  if (!isPostgresEnabled()) return getServerResourceById(id);
+
+  await ensureDbResourcesSeeded();
+  const rows = await pgQuery<{ data: InstantResource }>(
+    "SELECT data FROM resources WHERE id = $1 LIMIT 1",
+    [id]
+  );
+  return rows[0]?.data;
 }
 
 export function publishServerResource(
@@ -199,8 +278,45 @@ export function publishServerResource(
   return resource;
 }
 
+export async function publishServerResourceAsync(
+  input: Omit<InstantResource, "id" | "accessType"> & { id?: string }
+) {
+  const resource = publishServerResource(input);
+
+  if (!isPostgresEnabled()) return resource;
+
+  await ensureDbResourcesSeeded();
+  await pgQuery(
+    `
+      INSERT INTO resources (id, data, created_at, updated_at)
+      VALUES ($1, $2::jsonb, NOW(), NOW())
+      ON CONFLICT (id) DO UPDATE SET data = EXCLUDED.data, updated_at = NOW()
+    `,
+    [resource.id, JSON.stringify(resource)]
+  );
+  await upsertParticipant({
+    walletAddress: resource.sellerAddress,
+    participantType: resource.participantType ?? null,
+    participantName: resource.participantName ?? resource.sellerName ?? null,
+    operatorAddress: resource.operatorAddress ?? null,
+    data: { source: "resource_publish", resourceId: resource.id }
+  });
+
+  return resource;
+}
+
 export function getServerRequests(): AgentRequestDraft[] {
   return getStore().requests;
+}
+
+export async function getServerRequestsAsync(): Promise<AgentRequestDraft[]> {
+  if (!isPostgresEnabled()) return getServerRequests();
+
+  await ensureDbRequestsSeeded();
+  const rows = await pgQuery<{ data: AgentRequestDraft }>(
+    "SELECT data FROM requests ORDER BY created_at DESC"
+  );
+  return rows.map((row) => row.data);
 }
 
 export function createServerRequest(input: Omit<AgentRequestDraft, "id" | "status" | "createdAt">) {
@@ -211,6 +327,33 @@ export function createServerRequest(input: Omit<AgentRequestDraft, "id" | "statu
     createdAt: new Date().toISOString()
   };
   getStore().requests.unshift(request);
+  return request;
+}
+
+export async function createServerRequestAsync(
+  input: Omit<AgentRequestDraft, "id" | "status" | "createdAt">
+) {
+  const request = createServerRequest(input);
+
+  if (!isPostgresEnabled()) return request;
+
+  await ensureDbRequestsSeeded();
+  await pgQuery(
+    `
+      INSERT INTO requests (id, data, created_at, updated_at)
+      VALUES ($1, $2::jsonb, $3::timestamptz, NOW())
+      ON CONFLICT (id) DO UPDATE SET data = EXCLUDED.data, updated_at = NOW()
+    `,
+    [request.id, JSON.stringify(request), request.createdAt]
+  );
+  await upsertParticipant({
+    walletAddress: request.requesterAddress,
+    participantType: request.participantType ?? null,
+    participantName: request.participantName ?? null,
+    operatorAddress: request.operatorAddress ?? null,
+    data: { source: "request_create", requestId: request.id }
+  });
+
   return request;
 }
 
@@ -261,6 +404,41 @@ export function submitServerRequestDelivery({
   request.status = "Submitted";
   request.delivery = delivery;
   return { request, delivery };
+}
+
+export async function submitServerRequestDeliveryAsync(
+  input: Parameters<typeof submitServerRequestDelivery>[0]
+) {
+  if (!isPostgresEnabled()) return submitServerRequestDelivery(input);
+
+  await ensureDbRequestsSeeded();
+  const rows = await pgQuery<{ data: AgentRequestDraft }>(
+    "SELECT data FROM requests WHERE id = $1 LIMIT 1",
+    [input.requestId]
+  );
+  const request = rows[0]?.data;
+
+  if (!request) return null;
+
+  getStore().requests = getStore().requests.filter((item) => item.id !== request.id);
+  getStore().requests.unshift(request);
+  const result = submitServerRequestDelivery(input);
+
+  if (!result) return null;
+
+  await pgQuery(
+    "UPDATE requests SET data = $2::jsonb, updated_at = NOW() WHERE id = $1",
+    [result.request.id, JSON.stringify(result.request)]
+  );
+  await upsertParticipant({
+    walletAddress: result.request.providerAddress,
+    participantType: result.request.providerParticipantType ?? null,
+    participantName: result.request.providerParticipantName ?? null,
+    operatorAddress: result.request.providerOperatorAddress ?? null,
+    data: { source: "request_delivery", requestId: result.request.id }
+  });
+
+  return result;
 }
 
 export function parseTags(value: unknown): string[] {

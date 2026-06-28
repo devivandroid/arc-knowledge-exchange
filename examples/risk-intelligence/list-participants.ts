@@ -1,6 +1,6 @@
 import { RiskIntelligenceClient } from "../../lib/sdk/risk-intelligence";
 
-const baseUrl = process.env.RISK_API_BASE_URL ?? "https://knowledge-exchange.fly.dev";
+const baseUrl = process.env.RISK_API_BASE_URL ?? "https://kx-platform.fly.dev";
 const client = new RiskIntelligenceClient({ baseUrl });
 
 const response = await client.listParticipants({ limit: 10 });

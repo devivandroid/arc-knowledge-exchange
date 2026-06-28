@@ -15,7 +15,7 @@ const ratingsStorageKey = "knowledgeExchange:ratings";
 
 // Preview/testnet seed ratings keep curated resources from looking empty before
 // persistent verified reviews are added.
-const seededRatings: ResourceRating[] = [
+export const seededRatings: ResourceRating[] = [
   {
     resourceId: "credit-card-fraud-detection-benchmark-package",
     walletAddress: "0x1000000000000000000000000000000000000001",

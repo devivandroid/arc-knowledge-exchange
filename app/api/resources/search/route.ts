@@ -1,5 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { getServerResources } from "@/lib/server/agentMockStore";
+import { getServerResourcesAsync } from "@/lib/server/agentMockStore";
 
 export const runtime = "nodejs";
 
@@ -11,7 +11,7 @@ export async function GET(request: NextRequest) {
   const license = params.get("license");
   const agentConsumable = params.get("agentConsumable");
 
-  const resources = getServerResources().filter((resource) => {
+  const resources = (await getServerResourcesAsync()).filter((resource) => {
     const text = [resource.title, resource.description, resource.category, resource.tags.join(" ")]
       .join(" ")
       .toLowerCase();

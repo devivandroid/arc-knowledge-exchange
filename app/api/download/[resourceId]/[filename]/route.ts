@@ -3,8 +3,8 @@ import { NextResponse, type NextRequest } from "next/server";
 import { ARC_TESTNET_CHAIN_ID, ARC_TESTNET_CHAIN_ID_HEX } from "@/lib/chains/arcTestnet";
 import { usdcAddress, usdcDecimals } from "@/lib/contracts/microWorkEscrow";
 import { apiError } from "@/lib/server/apiResponse";
-import { getServerResourceById } from "@/lib/server/agentMockStore";
-import { trackReputationEvent } from "@/lib/server/reputation/reputationEventStore";
+import { getServerResourceByIdAsync } from "@/lib/server/agentMockStore";
+import { trackReputationEventAsync } from "@/lib/server/reputation/reputationEventStore";
 import { getResourceFile } from "@/lib/server/storage/resourceStorage";
 import { verifyInstantPurchase } from "@/lib/server/verifyInstantPurchase";
 
@@ -14,8 +14,8 @@ type DownloadRouteContext = {
 
 export const runtime = "nodejs";
 
-function paymentRequired(resourceId: string) {
-  const resource = getServerResourceById(resourceId);
+async function paymentRequired(resourceId: string) {
+  const resource = await getServerResourceByIdAsync(resourceId);
 
   if (!resource) {
     return apiError({
@@ -54,7 +54,7 @@ function paymentRequired(resourceId: string) {
 
 export async function GET(request: NextRequest, context: DownloadRouteContext) {
   const { resourceId, filename } = await context.params;
-  const resource = getServerResourceById(resourceId);
+  const resource = await getServerResourceByIdAsync(resourceId);
 
   if (!resource) {
     return apiError({
@@ -109,7 +109,7 @@ export async function GET(request: NextRequest, context: DownloadRouteContext) {
     });
   }
 
-  trackReputationEvent({
+  await trackReputationEventAsync({
     walletAddress: buyerAddress,
     counterpartyAddress: resource.sellerAddress,
     eventType: "RESOURCE_DOWNLOADED",

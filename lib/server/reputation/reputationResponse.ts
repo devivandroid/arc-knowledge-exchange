@@ -3,7 +3,7 @@ import { getApiParticipantType } from "@/lib/participants";
 import type { ReputationSummary } from "@/types/reputation";
 
 export const reputationLimitations = [
-  "Based only on Knowledge Exchange events",
+  "Based only on KX events",
   "Not an official Arc or Circle score",
   "MVP risk model",
   "Preview storage is local/ephemeral",
@@ -16,7 +16,7 @@ export function toReputationApiResponse(summary: ReputationSummary) {
   return {
     ok: true,
     wallet: summary.wallet,
-    scope: "Knowledge Exchange activity only",
+    scope: "KX activity only",
     network: "Arc Testnet",
     chainId: ARC_TESTNET_CHAIN_ID,
     participantType,

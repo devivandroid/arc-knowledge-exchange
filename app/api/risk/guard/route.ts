@@ -1,6 +1,6 @@
 import { isAddress } from "ethers";
 import { NextResponse, type NextRequest } from "next/server";
-import { evaluateRiskGuard } from "@/lib/server/risk-intelligence/riskService";
+import { evaluateRiskGuardAsync } from "@/lib/server/risk-intelligence/riskService";
 import type {
   ConfidenceLevel,
   RiskGuardPolicy,
@@ -96,7 +96,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const policy = parsePolicy(body.policy);
-    return NextResponse.json(evaluateRiskGuard(body.wallet, policy));
+    return NextResponse.json(await evaluateRiskGuardAsync(body.wallet, policy));
   } catch (error) {
     return NextResponse.json(
       {

@@ -9,7 +9,7 @@ const footerLinks = [
   { label: "Agent API", href: "/agent-api", external: false },
   {
     label: "GitHub",
-    href: "https://github.com/devivandroid/arc-knowledge-exchange",
+    href: "https://github.com/devivandroid/kx-platform",
     external: true
   },
   { label: "X", href: "https://x.com/KnowledgeOnArc", external: true }
@@ -22,7 +22,7 @@ export function Footer() {
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex flex-col gap-3">
             <BrandLogo />
-            <p>USDC-native knowledge commerce on Arc Testnet</p>
+            <p>Human and agent commerce on Arc Testnet</p>
           </div>
           <div className="flex flex-wrap gap-5">
             {footerLinks.map((link) =>
@@ -74,7 +74,7 @@ export function Footer() {
             </span>
           </div>
           <p className="max-w-2xl text-xs leading-5 text-slate-600">
-            Knowledge Exchange is an independent project and is not affiliated with or endorsed by
+            KX Platform is an independent project and is not affiliated with or endorsed by
             Circle or Arc.
           </p>
         </div>

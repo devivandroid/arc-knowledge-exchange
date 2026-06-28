@@ -1,8 +1,8 @@
 import { isAddress } from "ethers";
 import { NextResponse, type NextRequest } from "next/server";
 import { isParticipantType } from "@/lib/participants";
-import { submitServerRequestDelivery } from "@/lib/server/agentMockStore";
-import { trackReputationEvent } from "@/lib/server/reputation/reputationEventStore";
+import { submitServerRequestDeliveryAsync } from "@/lib/server/agentMockStore";
+import { trackReputationEventAsync } from "@/lib/server/reputation/reputationEventStore";
 
 type SubmitRouteContext = {
   params: Promise<{ id: string }>;
@@ -54,7 +54,7 @@ export async function POST(request: NextRequest, context: SubmitRouteContext) {
       ? body.providerOperatorAddress.trim()
       : undefined;
 
-  const result = submitServerRequestDelivery({
+  const result = await submitServerRequestDeliveryAsync({
     requestId: id,
     providerAddress: body.providerAddress,
     providerParticipantType,
@@ -69,7 +69,7 @@ export async function POST(request: NextRequest, context: SubmitRouteContext) {
     return NextResponse.json({ error: "REQUEST_NOT_FOUND", requestId: id }, { status: 404 });
   }
 
-  trackReputationEvent({
+  await trackReputationEventAsync({
     walletAddress: body.providerAddress,
     counterpartyAddress: result.request.requesterAddress,
     eventType: "DELIVERY_SUBMITTED",
@@ -91,6 +91,6 @@ export async function POST(request: NextRequest, context: SubmitRouteContext) {
     deliveryHash: result.delivery.deliveryHash,
     deliveryURI: result.delivery.deliveryURI,
     message:
-      "Delivery stored in server-side ephemeral storage. Escrow-backed requests still require wallet/contract submitWork interaction for on-chain settlement."
+      "Delivery stored. With DATABASE_URL configured, it is persisted in PostgreSQL. Escrow-backed requests still require wallet/contract submitWork interaction for on-chain settlement."
   });
 }

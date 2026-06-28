@@ -1,7 +1,7 @@
 # Risk Intelligence SDK
 
-The Knowledge Exchange Risk Intelligence Service exposes participant-aware risk profiles for
-wallets observed in Knowledge Exchange activity. The internal TypeScript SDK wraps the public
+The KX Risk Intelligence Service exposes participant-aware risk profiles for
+wallets observed in KX activity. The internal TypeScript SDK wraps the public
 `/api/risk/*` routes so builders and agent workflows can integrate them without hand-writing
 fetch calls.
 
@@ -10,6 +10,8 @@ This SDK is kept inside the repository for now. It is not published to npm.
 ## What The Service Provides
 
 - Full participant risk profiles.
+- Arc Network Activity Adapter profiles.
+- Combined KX + Arc Network profiles.
 - Compact summaries for lightweight checks.
 - Behavioral signals and risk signals.
 - Scoring methodology, tiers and confidence rules.
@@ -23,7 +25,7 @@ This SDK is kept inside the repository for now. It is not published to npm.
 import { RiskIntelligenceClient } from "@/lib/sdk/risk-intelligence";
 
 const client = new RiskIntelligenceClient({
-  baseUrl: "https://knowledge-exchange.fly.dev"
+  baseUrl: "https://kx-platform.fly.dev"
 });
 ```
 
@@ -39,6 +41,8 @@ const client = new RiskIntelligenceClient({
 
 ```ts
 const profile = await client.getProfile(wallet);
+const network = await client.getNetworkProfile(wallet);
+const combined = await client.getCombinedProfile(wallet);
 const summary = await client.getSummary(wallet);
 const signals = await client.getSignals(wallet);
 const participants = await client.listParticipants({ limit: 10 });
@@ -54,6 +58,8 @@ const guard = await client.evaluateTransactionRisk(wallet, {
 Available methods:
 
 - `getProfile(wallet)` calls `GET /api/risk/profile/:wallet`.
+- `getNetworkProfile(wallet)` calls `GET /api/risk/network/:wallet`.
+- `getCombinedProfile(wallet)` calls `GET /api/risk/profile/:wallet?source=combined`.
 - `getSummary(wallet)` calls `GET /api/risk/summary/:wallet`.
 - `getSignals(wallet)` calls `GET /api/risk/signals/:wallet`.
 - `getModel()` calls `GET /api/risk/model`.
@@ -97,7 +103,7 @@ const allowed = await client.canTransactWith(wallet, {
 });
 ```
 
-Risk Guard is not compliance screening and is based only on Knowledge Exchange activity.
+Risk Guard is not compliance screening and is based only on KX activity.
 
 Developers who need the full `allow | review | block` distinction should call
 `evaluateTransactionRisk`. `canTransactWith` returns `true` only for `allow`; `review` and
@@ -105,7 +111,7 @@ Developers who need the full `allow | review | block` distinction should call
 
 ### Unknown Wallets And No-Data Profiles
 
-Risk Intelligence is currently based on Knowledge Exchange activity. A wallet with no observed
+Risk Intelligence is currently based on KX activity. A wallet with no observed
 activity returns:
 
 ```json
@@ -117,7 +123,7 @@ activity returns:
     "riskTier": "Unknown",
     "confidenceLevel": "Low"
   },
-  "message": "No Knowledge Exchange activity was found for this wallet.",
+  "message": "No KX activity was found for this wallet.",
   "recommendation": "Missing data is not negative evidence. Apply your own policy or request additional verification before transacting."
 }
 ```
@@ -182,7 +188,7 @@ const participants = await client.listParticipants({
 ```json
 {
   "ok": true,
-  "scope": "Knowledge Exchange activity only",
+  "scope": "KX activity only",
   "wallet": "0x...",
   "participant": {
     "type": "agent",
@@ -217,7 +223,7 @@ Example scripts live in `examples/risk-intelligence/`:
 - `risk-guard-unknown-wallet.ts`
 - `threshold-helpers.ts`
 
-They use `https://knowledge-exchange.fly.dev` by default. Set `RISK_API_BASE_URL` to use a
+They use `https://kx-platform.fly.dev` by default. Set `RISK_API_BASE_URL` to use a
 local server:
 
 ```bash
@@ -226,7 +232,7 @@ RISK_API_BASE_URL=http://localhost:3000
 
 ## Limitations
 
-- Knowledge Exchange activity only.
+- KX activity only.
 - Preview model.
 - Not an official Arc or Circle score.
 - Not AML, KYC, sanctions, fraud or compliance screening.
@@ -234,12 +240,12 @@ RISK_API_BASE_URL=http://localhost:3000
 - No billing, rate limits or production SLA yet.
 - Seed/demo participants are for public testnet preview only.
 
-## Planned Data Sources
+## Arc Network Activity Adapter
 
-Planned: **Arc Network Activity Adapter**.
+The current adapter can enrich profiles with Arc Testnet RPC signals such as transaction count,
+native USDC balance, account code and latest observed block context. It does not include a full
+network indexer yet.
 
-Future versions may enrich profiles with optional Arc Testnet wallet activity signals beyond
-Knowledge Exchange events, such as wallet age, transaction count, unique counterparties, last
-network activity, contract interaction count, estimated USDC activity and network activity level.
-This is not implemented yet and does not imply official Arc/Circle coverage, all-wallet scoring or
-AML/KYC/compliance screening.
+Future versions may add wallet age, unique counterparties, last network activity, historical
+contract interaction count, indexed ERC-20 activity and richer network activity levels. This does
+not imply official Arc/Circle coverage, all-wallet scoring or AML/KYC/compliance screening.

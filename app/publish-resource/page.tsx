@@ -9,7 +9,7 @@ import { PageHeader } from "@/components/PageHeader";
 import { PageShell } from "@/components/PageShell";
 import { TransactionStatus, type TransactionState } from "@/components/TransactionStatus";
 import { useWallet } from "@/hooks/useWallet";
-import { createLocalResourceId, saveLocalResource } from "@/lib/localResources";
+import { createLocalResourceId } from "@/lib/localResources";
 import { isParticipantType } from "@/lib/participants";
 import { isValidUsdcAmount } from "@/lib/validateUsdcAmount";
 import { normalizeWeb3Error } from "@/lib/web3";
@@ -181,7 +181,6 @@ export default function PublishResourcePage() {
         throw new Error(publishBody.message || publishBody.error || "Resource publish failed.");
       }
 
-      saveLocalResource(publishBody.resource);
       setTxState({
         phase: "success",
         message: "Instant Resource published. Redirecting to the resource detail."

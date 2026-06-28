@@ -12,6 +12,10 @@ export type InstantAccessPurchase = {
 };
 
 function getPurchaseStorageKey(address: string): string {
+  return `kxPlatform:purchases:${address.toLowerCase()}`;
+}
+
+function getLegacyPurchaseStorageKey(address: string): string {
   return `arcKnowledgeExchange:purchases:${address.toLowerCase()}`;
 }
 
@@ -21,7 +25,9 @@ export function getPurchases(address: string | null | undefined): InstantAccessP
   }
 
   try {
-    const value = window.localStorage.getItem(getPurchaseStorageKey(address));
+    const value =
+      window.localStorage.getItem(getPurchaseStorageKey(address)) ??
+      window.localStorage.getItem(getLegacyPurchaseStorageKey(address));
     return value ? (JSON.parse(value) as InstantAccessPurchase[]) : [];
   } catch {
     return [];

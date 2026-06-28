@@ -5,7 +5,7 @@ import {
   isLicenseType,
   isResourceType,
   parseTags,
-  publishServerResource
+  publishServerResourceAsync
 } from "@/lib/server/agentMockStore";
 import { isValidUsdcAmount } from "@/lib/validateUsdcAmount";
 import type { DeliveryType, ResourceFile } from "@/types/resource";
@@ -82,7 +82,7 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const resource = publishServerResource({
+  const resource = await publishServerResourceAsync({
     id: typeof body.id === "string" ? body.id : undefined,
     title: String(body.title),
     description: String(body.description),
@@ -111,7 +111,7 @@ export async function POST(request: NextRequest) {
       endpoint: `/api/resources/${resource.id}`,
       purchaseEndpoint: `/api/resources/${resource.id}`,
       message:
-        "Resource published to server-side ephemeral storage. It may reset when the server restarts."
+        "Resource published. With DATABASE_URL configured, it is persisted in PostgreSQL."
     },
     { status: 201 }
   );

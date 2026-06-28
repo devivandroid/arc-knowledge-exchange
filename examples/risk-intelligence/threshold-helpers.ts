@@ -1,7 +1,7 @@
 import { RiskIntelligenceClient } from "../../lib/sdk/risk-intelligence";
 
 const client = new RiskIntelligenceClient({
-  baseUrl: "https://knowledge-exchange.fly.dev"
+  baseUrl: "https://kx-platform.fly.dev"
 });
 
 const wallet = "0x1234500000000000000000000000000000000000";

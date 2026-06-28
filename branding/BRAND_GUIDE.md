@@ -1,6 +1,6 @@
-# Arc Knowledge Exchange Brand Guide
+# KX Platform Brand Guide
 
-Arc Knowledge Exchange uses a premium dark Web3 identity built around a geometric isometric cube. The mark is inspired by the Option 4 reference direction, but it is a clean production vector and does not use or imply affiliation with Arc, Circle, or any official ecosystem logo.
+KX Platform uses a premium dark Web3 identity built around a geometric isometric cube. The mark is inspired by the Option 4 reference direction, but it is a clean production vector and does not use or imply affiliation with Arc, Circle, or any official ecosystem logo.
 
 ## Logo Usage
 

@@ -13,6 +13,7 @@ const eslintConfig = [
   {
     ignores: [
       ".next/**",
+      ".next-local/**",
       "artifacts/**",
       "cache/**",
       "node_modules/**",

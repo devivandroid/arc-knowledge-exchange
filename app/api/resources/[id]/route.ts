@@ -2,8 +2,8 @@ import { NextResponse, type NextRequest } from "next/server";
 import { ARC_TESTNET_CHAIN_ID, ARC_TESTNET_CHAIN_ID_HEX } from "@/lib/chains/arcTestnet";
 import { usdcAddress, usdcDecimals } from "@/lib/contracts/microWorkEscrow";
 import { apiError } from "@/lib/server/apiResponse";
-import { getServerResourceById } from "@/lib/server/agentMockStore";
-import { trackReputationEvent } from "@/lib/server/reputation/reputationEventStore";
+import { getServerResourceByIdAsync } from "@/lib/server/agentMockStore";
+import { trackReputationEventAsync } from "@/lib/server/reputation/reputationEventStore";
 import { verifyInstantPurchase } from "@/lib/server/verifyInstantPurchase";
 
 type ResourceRouteContext = {
@@ -12,8 +12,8 @@ type ResourceRouteContext = {
 
 export const runtime = "nodejs";
 
-function paymentRequired(resourceId: string) {
-  const resource = getServerResourceById(resourceId);
+async function paymentRequired(resourceId: string) {
+  const resource = await getServerResourceByIdAsync(resourceId);
 
   if (!resource) {
     return apiError({
@@ -57,10 +57,10 @@ export async function GET(request: NextRequest, context: ResourceRouteContext) {
   const { id } = await context.params;
   const txHash = request.nextUrl.searchParams.get("txHash");
   const buyerAddress = request.nextUrl.searchParams.get("buyerAddress");
-  const resource = getServerResourceById(id);
+  const resource = await getServerResourceByIdAsync(id);
 
   if (resource && buyerAddress) {
-    trackReputationEvent({
+    await trackReputationEventAsync({
       walletAddress: buyerAddress,
       counterpartyAddress: resource.sellerAddress,
       eventType: "API_RESOURCE_QUERIED",
@@ -70,7 +70,7 @@ export async function GET(request: NextRequest, context: ResourceRouteContext) {
 
   if (!txHash || !buyerAddress) {
     if (resource && buyerAddress) {
-      trackReputationEvent({
+      await trackReputationEventAsync({
         walletAddress: buyerAddress,
         counterpartyAddress: resource.sellerAddress,
         eventType: "API_402_RETURNED",
@@ -98,7 +98,7 @@ export async function GET(request: NextRequest, context: ResourceRouteContext) {
     return paymentRequired(id);
   }
 
-  trackReputationEvent({
+  await trackReputationEventAsync({
     walletAddress: buyerAddress,
     counterpartyAddress: result.resource.sellerAddress,
     eventType: "API_UNLOCK_SUCCESS",

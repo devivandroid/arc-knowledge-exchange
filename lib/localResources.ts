@@ -1,7 +1,8 @@
 import { getInstantResourceById, getInstantResources } from "@/services/resources";
 import type { InstantResource } from "@/types/resource";
 
-const localResourcesKey = "arcKnowledgeExchange:resources";
+const localResourcesKey = "kxPlatform:resources";
+const legacyLocalResourcesKey = "arcKnowledgeExchange:resources";
 
 export function createLocalResourceId(title: string, timestamp = Date.now()): string {
   const slug =
@@ -21,7 +22,9 @@ export function getLocalResources(): InstantResource[] {
   }
 
   try {
-    const value = window.localStorage.getItem(localResourcesKey);
+    const value =
+      window.localStorage.getItem(localResourcesKey) ??
+      window.localStorage.getItem(legacyLocalResourcesKey);
     return value ? (JSON.parse(value) as InstantResource[]) : [];
   } catch {
     return [];

@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import {
-  getRiskProfiles,
+  getRiskProfilesAsync,
   riskServiceLimitations,
   riskServiceNetwork,
   riskServiceScope,
@@ -13,7 +13,7 @@ export async function GET(request: NextRequest) {
   const limit = Math.max(1, Math.min(Number(request.nextUrl.searchParams.get("limit") || 25), 100));
   const riskTier = request.nextUrl.searchParams.get("riskTier");
   const participantType = request.nextUrl.searchParams.get("participantType");
-  const participants = getRiskProfiles(100)
+  const participants = (await getRiskProfilesAsync(100))
     .filter((profile) => !riskTier || profile.scores.riskTier === riskTier)
     .filter((profile) => !participantType || profile.participant.type === participantType)
     .slice(0, limit)
@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
 
   return NextResponse.json({
     ok: true,
-    service: "Knowledge Exchange Public Risk Intelligence Service",
+    service: "KX Public Risk Intelligence Service",
     scope: riskServiceScope,
     network: riskServiceNetwork,
     participants,

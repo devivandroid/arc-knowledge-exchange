@@ -103,7 +103,7 @@ export default function NewRequestPage() {
         resourceType: values.resourceType,
         agentConsumable: values.agentConsumable,
         deadline: values.deadline || null,
-        createdFrom: "Arc Knowledge Exchange"
+        createdFrom: "KX Platform"
       };
       const metadataURI = `data:application/json;base64,${btoa(JSON.stringify(metadata))}`;
       const tx = await createTask(values.budgetUsdc, metadataURI);

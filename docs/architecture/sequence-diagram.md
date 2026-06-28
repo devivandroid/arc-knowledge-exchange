@@ -1,7 +1,7 @@
 # Sequence Diagram
 
 This diagram shows a complete protected transaction path with Risk Guard. It includes the no-data
-wallet behavior: missing Knowledge Exchange activity is not treated as high risk by default.
+wallet behavior: missing KX activity is not treated as high risk by default.
 
 ```mermaid
 sequenceDiagram
@@ -35,7 +35,7 @@ sequenceDiagram
   else Decision is block
     RiskGuard-->>Marketplace: block
     Marketplace-->>Buyer: Stop transaction flow
-  else Wallet has no Knowledge Exchange activity
+  else Wallet has no KX activity
     Engine-->>RiskGuard: profileStatus no_data, riskTier Unknown, null scores
     RiskGuard-->>Marketplace: review by default
     Marketplace-->>Buyer: Missing data is not high risk; request additional verification

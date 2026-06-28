@@ -6,6 +6,7 @@ import type {
   RiskProfileStatus,
   RiskSignalSeverity,
   RiskTier,
+  RiskDataSource,
   UnknownWalletBehavior
 } from "@/lib/server/risk-intelligence/types";
 
@@ -17,6 +18,7 @@ export type {
   RiskProfileStatus,
   RiskSignalSeverity,
   RiskTier,
+  RiskDataSource,
   UnknownWalletBehavior
 };
 
@@ -51,6 +53,19 @@ export type RiskSdkActivity = {
   daysSinceLastActivity?: number;
   activityLevel: ActivityLevel;
   evidenceCount: number;
+};
+
+export type RiskSdkMetadata = {
+  dataFreshness?: string;
+  lastIndexed?: string;
+  cacheSource?: string;
+  coverage?: {
+    fromBlock?: number;
+    toBlock?: number;
+    blocksAnalyzed?: number;
+    fullHistory?: boolean;
+    description?: string;
+  };
 };
 
 export type RiskSdkBehavioralSignal = {
@@ -90,12 +105,14 @@ export type RiskProfileResponse = {
   network: string;
   chainId: number;
   wallet: string;
+  dataSource: RiskDataSource;
   profileStatus: RiskProfileStatus;
   message?: string;
   recommendation?: string;
   participant: RiskSdkParticipant;
   scores: RiskSdkScores;
   activity: RiskSdkActivity;
+  metadata?: RiskSdkMetadata;
   behavioralSignals: RiskSdkBehavioralSignal[];
   riskSignals: RiskSdkRiskSignal[];
   limitations: string[];
@@ -112,6 +129,7 @@ export type RiskSummaryResponse = {
   network: string;
   chainId: number;
   wallet: string;
+  dataSource: RiskDataSource;
   profileStatus: RiskProfileStatus;
   message?: string;
   recommendation?: string;
@@ -137,6 +155,7 @@ export type RiskSignalsResponse = {
   network: string;
   chainId: number;
   wallet: string;
+  dataSource: RiskDataSource;
   profileStatus: RiskProfileStatus;
   message?: string;
   recommendation?: string;

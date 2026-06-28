@@ -6,24 +6,26 @@ import { WalletProvider } from "@/hooks/useWallet";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://arc-knowledge-exchange.fly.dev"),
-  title: "Knowledge Exchange",
+  metadataBase: new URL("https://kx-platform.fly.dev"),
+  title: "KX Platform",
   description:
-    "An independent marketplace where humans and agents buy, sell, request, and deliver knowledge assets using USDC. Built on Arc.",
+    "The programmable trust & commerce layer for humans, autonomous agents and organizations. Built on Arc.",
   icons: {
     icon: "/brand/favicon.svg",
     shortcut: "/brand/favicon.svg",
     apple: "/brand/favicon.svg"
   },
   openGraph: {
-    title: "Knowledge Exchange",
-    description: "USDC-native knowledge commerce for humans and autonomous agents. Built on Arc.",
+    title: "KX Platform",
+    description:
+      "Human & Agent Commerce Platform for programmable USDC workflows. Built on Arc.",
     images: ["/brand/logo-wordmark.svg"]
   },
   twitter: {
     card: "summary_large_image",
-    title: "Knowledge Exchange",
-    description: "USDC-native knowledge commerce for humans and autonomous agents. Built on Arc.",
+    title: "KX Platform",
+    description:
+      "Human & Agent Commerce Platform for programmable USDC workflows. Built on Arc.",
     images: ["/brand/logo-wordmark.svg"]
   }
 };

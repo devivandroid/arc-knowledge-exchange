@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { apiError } from "@/lib/server/apiResponse";
-import { trackReputationEvent } from "@/lib/server/reputation/reputationEventStore";
+import { savePurchaseReceipt } from "@/lib/server/purchaseReceipts";
+import { trackInstantPurchaseRiskEvents } from "@/lib/server/reputation/reputationEventStore";
 import { verifyInstantPurchase } from "@/lib/server/verifyInstantPurchase";
 
 type VerifyPaymentRouteContext = {
@@ -62,12 +63,12 @@ export async function POST(request: NextRequest, context: VerifyPaymentRouteCont
     });
   }
 
-  trackReputationEvent({
-    walletAddress: buyerAddress,
-    counterpartyAddress: result.resource.sellerAddress,
-    eventType: "PAYMENT_VERIFIED",
-    resourceId: id,
+  await savePurchaseReceipt(result.receipt);
+  await trackInstantPurchaseRiskEvents({
     txHash,
+    resourceId: id,
+    buyerAddress,
+    sellerAddress: result.resource.sellerAddress,
     amountUSDC: result.resource.priceUSDC
   });
 

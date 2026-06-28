@@ -7,6 +7,7 @@ export type RiskSignalSeverity = "Info" | "Watch" | "Elevated";
 export type RiskGuardDecision = "allow" | "review" | "block";
 export type RiskProfileStatus = "active" | "limited" | "no_data";
 export type UnknownWalletBehavior = "allow" | "review" | "block";
+export type RiskDataSource = "knowledge_exchange" | "arc_network" | "combined" | "no_data";
 
 export interface RiskGuardPolicy {
   maxRiskScore?: number;
@@ -25,6 +26,7 @@ export type RiskGuardCheck = {
 
 export interface RiskProfile {
   wallet: string;
+  dataSource?: RiskDataSource;
   profileStatus: RiskProfileStatus;
   message?: string;
   recommendation?: string;
@@ -57,6 +59,18 @@ export interface RiskProfile {
     daysSinceLastActivity?: number;
     activityLevel: ActivityLevel;
     evidenceCount: number;
+  };
+  metadata?: {
+    dataFreshness?: string;
+    lastIndexed?: string;
+    cacheSource?: string;
+    coverage?: {
+      fromBlock?: number;
+      toBlock?: number;
+      blocksAnalyzed?: number;
+      fullHistory?: boolean;
+      description?: string;
+    };
   };
   behavioralSignals: Array<{
     label: string;

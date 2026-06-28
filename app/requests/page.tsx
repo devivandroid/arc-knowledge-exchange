@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { PageHeader } from "@/components/PageHeader";
 import { PageShell } from "@/components/PageShell";
@@ -8,6 +9,20 @@ import { TaskCard } from "@/components/TaskCard";
 import { isEscrowConfigured, useRecentTasks, useTaskCount } from "@/hooks/useEscrowContract";
 import { getTaskDisplayDescription, getTaskDisplayTitle } from "@/lib/taskMetadata";
 import type { EscrowTask } from "@/lib/contracts/microWorkEscrow";
+
+type PublicRequestDraft = {
+  id: string;
+  title: string;
+  description: string;
+  requirements: string;
+  budgetUSDC: string;
+  license: string;
+  requesterAddress: string;
+  participantType?: string;
+  participantName?: string;
+  status: string;
+  agentConsumable: boolean;
+};
 
 const nonProductionRequestPatterns = [
   /send\s+1\s+usdc\s+test\s+task/i,
@@ -29,7 +44,27 @@ function isProductionRequest(request: EscrowTask) {
 export default function RequestsPage() {
   const taskCountQuery = useTaskCount();
   const requestsQuery = useRecentTasks();
+  const [apiRequests, setApiRequests] = useState<PublicRequestDraft[]>([]);
   const visibleRequests = requestsQuery.data?.filter(isProductionRequest) ?? [];
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadApiRequests() {
+      const response = await fetch("/api/requests/search?status=Open");
+      const body = (await response.json()) as { requests?: PublicRequestDraft[] };
+
+      if (!cancelled && body.requests) {
+        setApiRequests(body.requests);
+      }
+    }
+
+    loadApiRequests().catch(() => undefined);
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   return (
     <PageShell>
@@ -87,6 +122,47 @@ export default function RequestsPage() {
             Create Request
           </Link>
         </div>
+      ) : null}
+
+      {apiRequests.length > 0 ? (
+        <section className="mb-5">
+          <div className="mb-3 flex items-end justify-between gap-3">
+            <div>
+              <p className="text-sm font-semibold text-white">Public request drafts</p>
+              <p className="mt-1 text-sm text-slate-500">
+                Shared request opportunities served from the public API catalog.
+              </p>
+            </div>
+          </div>
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+            {apiRequests.map((request) => (
+              <article
+                key={request.id}
+                className="rounded-lg border border-arc-border bg-arc-panel/80 p-5 shadow-glow"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <p className="text-xs font-semibold uppercase tracking-normal text-arc-blue">
+                    {request.status}
+                  </p>
+                  {request.agentConsumable ? (
+                    <span className="rounded-full border border-arc-border px-2 py-1 text-xs text-slate-400">
+                      Agent-ready
+                    </span>
+                  ) : null}
+                </div>
+                <h2 className="mt-3 text-lg font-semibold text-white">{request.title}</h2>
+                <p className="mt-2 line-clamp-3 text-sm leading-6 text-slate-400">
+                  {request.description}
+                </p>
+                <div className="mt-4 flex flex-wrap gap-2 text-xs text-slate-500">
+                  <span>{request.budgetUSDC} USDC</span>
+                  <span>{request.license}</span>
+                  {request.participantName ? <span>{request.participantName}</span> : null}
+                </div>
+              </article>
+            ))}
+          </div>
+        </section>
       ) : null}
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">

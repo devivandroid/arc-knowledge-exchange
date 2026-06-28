@@ -1,7 +1,7 @@
 import { isAddress } from "ethers";
 import { NextResponse } from "next/server";
 import {
-  getRiskProfile,
+  getRiskProfileAsync,
   toRiskSummaryResponse
 } from "@/lib/server/risk-intelligence/riskService";
 
@@ -21,5 +21,5 @@ export async function GET(_request: Request, context: RiskWalletContext) {
     );
   }
 
-  return NextResponse.json(toRiskSummaryResponse(getRiskProfile(wallet)));
+  return NextResponse.json(toRiskSummaryResponse(await getRiskProfileAsync(wallet)));
 }

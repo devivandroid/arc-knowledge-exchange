@@ -22,9 +22,9 @@ if not exist ".next\standalone\server.js" (
   exit /b 1
 )
 
-echo Starting Knowledge Exchange production server on http://127.0.0.1:%PORT%
+echo Starting KX production server on http://127.0.0.1:%PORT%
 echo Logs: %ROOT%\prod-server-%PORT%.out.log
-start "Knowledge Exchange Production Server" /min cmd /c ""%NODE_HOME%\node.exe" ".next\standalone\server.js" > "%ROOT%\prod-server-%PORT%.out.log" 2> "%ROOT%\prod-server-%PORT%.err.log""
+start "KX Production Server" /min cmd /c ""%NODE_HOME%\node.exe" ".next\standalone\server.js" > "%ROOT%\prod-server-%PORT%.out.log" 2> "%ROOT%\prod-server-%PORT%.err.log""
 
 popd >nul
 endlocal

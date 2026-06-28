@@ -11,7 +11,7 @@ export const runtime = "nodejs";
 
 export async function GET() {
   return NextResponse.json({
-    name: "Arc Knowledge Exchange Agent API",
+    name: "KX Agent API",
     network: {
       name: "Arc Testnet",
       chainId: ARC_TESTNET_CHAIN_ID,
@@ -35,6 +35,8 @@ export async function GET() {
     },
     risk_intelligence: true,
     risk_profile_endpoint: "/api/risk/profile/{wallet}",
+    risk_network_profile_endpoint: "/api/risk/network/{wallet}",
+    risk_combined_profile_endpoint: "/api/risk/profile/{wallet}?source=combined",
     risk_summary_endpoint: "/api/risk/summary/{wallet}",
     risk_signals_endpoint: "/api/risk/signals/{wallet}",
     risk_guard: true,
@@ -49,14 +51,16 @@ export async function GET() {
     behavioral_signals: true,
     confidence_levels: true,
     riskIntelligence: {
-      service: "Knowledge Exchange Public Risk Intelligence Service",
+      service: "KX Public Risk Intelligence Service",
       profileEndpoint: "/api/risk/profile/{wallet}",
+      networkProfileEndpoint: "/api/risk/network/{wallet}",
+      combinedProfileEndpoint: "/api/risk/profile/{wallet}?source=combined",
       summaryEndpoint: "/api/risk/summary/{wallet}",
       signalsEndpoint: "/api/risk/signals/{wallet}",
       guardEndpoint: "/api/risk/guard",
       modelEndpoint: "/api/risk/model",
       participantsEndpoint: "/api/risk/participants",
-      scope: "Knowledge Exchange activity only",
+      scope: "KX activity only",
       noDataProfiles: true,
       unknownWalletBehavior: ["allow", "review", "block"],
       riskGuardDefaultUnknownWalletBehavior: "review",
@@ -66,7 +70,15 @@ export async function GET() {
         "Not an official Arc or Circle score",
         "No authentication yet",
         "No production-grade compliance screening"
-      ]
+      ],
+      dataSources: ["knowledge_exchange", "arc_network", "combined", "no_data"]
+    },
+    sdk: {
+      name: "KX TypeScript SDK",
+      repositoryPath: "lib/sdk/kx",
+      documentation: "docs/kx-sdk.md",
+      parityGoal:
+        "Public APIs and SDK methods mirror the current human UI capabilities wherever wallet signing is not required."
     },
     capabilities: [
       {
@@ -104,11 +116,35 @@ export async function GET() {
         responseCodes: [200, 402, 403, 404, 502]
       },
       {
+        id: "get_resource_ratings",
+        method: "GET",
+        endpoint: "/api/resources/{id}/ratings",
+        query: ["walletAddress"],
+        note: "Returns the resource rating summary and optional current-wallet rating.",
+        responseCodes: [200]
+      },
+      {
+        id: "rate_resource",
+        method: "POST",
+        endpoint: "/api/resources/{id}/ratings",
+        requiredFields: ["walletAddress", "rating"],
+        note: "Stores or updates one rating per wallet and resource. Purchase eligibility is enforced by the client UI in this MVP.",
+        responseCodes: [201, 400]
+      },
+      {
         id: "query_wallet_risk",
         method: "GET",
         endpoint: "/api/risk/profile/{wallet}",
+        query: ["source=internal", "source=arc_network", "source=combined"],
         legacyEndpoint: "/api/reputation/{wallet}",
-        note: "Returns a preview Risk Intelligence profile and reputation signals based only on Knowledge Exchange activity.",
+        note: "Returns a preview Risk Intelligence profile. Defaults to combined KX and Arc Network signals.",
+        responseCodes: [200, 400]
+      },
+      {
+        id: "query_arc_network_risk",
+        method: "GET",
+        endpoint: "/api/risk/network/{wallet}",
+        note: "Returns an Arc Testnet RPC activity profile using the Arc Network Activity Adapter.",
         responseCodes: [200, 400]
       },
       {
@@ -166,8 +202,8 @@ export async function GET() {
       }
     ],
     limitations: [
-      "No database yet.",
-      "Server-side ephemeral storage may reset on restart.",
+      "PostgreSQL persistence requires DATABASE_URL.",
+      "Uploaded private files still use MVP filesystem storage and should move to durable object storage for production.",
       "No authentication or API keys yet.",
       "No replay protection yet.",
       "Access proofs are unsigned preview tokens, not production authorization tokens.",

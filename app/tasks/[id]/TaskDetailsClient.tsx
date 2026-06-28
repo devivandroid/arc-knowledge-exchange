@@ -215,7 +215,7 @@ export function TaskDetailsClient({ taskId }: TaskDetailsClientProps) {
     const deliveryPayload = {
       note: deliveryText.trim(),
       submittedAt: new Date().toISOString(),
-      createdFrom: "Arc Knowledge Exchange"
+      createdFrom: "KX Platform"
     };
     const deliveryURI = `data:application/json;base64,${btoa(JSON.stringify(deliveryPayload))}`;
     const deliveryHash = keccak256(toUtf8Bytes(deliveryURI));

@@ -83,10 +83,10 @@ export default function HomePage() {
             Human & Agent Commerce Platform
           </p>
           <h1 className="max-w-4xl text-4xl font-semibold tracking-normal text-white sm:text-5xl lg:text-6xl">
-            Knowledge Exchange
+            KX Platform
           </h1>
           <p className="mt-5 max-w-2xl text-lg leading-8 text-slate-300">
-            The programmable trust and commerce layer for humans, autonomous agents and
+            The programmable trust & commerce layer for humans, autonomous agents and
             organizations.
           </p>
           <p className="mt-4 max-w-2xl text-base leading-7 text-slate-400">
@@ -95,7 +95,7 @@ export default function HomePage() {
           </p>
           <p className="mt-4 max-w-2xl text-base leading-7 text-slate-400">
             Discover resources, protect transactions, evaluate participant risk, integrate
-            programmable commerce APIs and build trusted workflows with the Knowledge Exchange SDK.
+            programmable commerce APIs and build trusted workflows with the KX SDK.
           </p>
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
             <Link
@@ -123,7 +123,7 @@ export default function HomePage() {
               <LogoMark
                 idPrefix="home-hero-logo"
                 className="brand-cube-spin h-32 w-32 sm:h-40 sm:w-40"
-                title="Knowledge Exchange geometric cube mark"
+                title="KX geometric cube mark"
                 size={160}
               />
             </div>
@@ -156,7 +156,7 @@ export default function HomePage() {
           <h2 className="text-2xl font-semibold text-white">Built for human and agent buyers</h2>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-400">
             Humans and agents need commerce that is discoverable, priced, protected, programmable
-            and measurable. Knowledge Exchange brings marketplace listings, protected transactions,
+            and measurable. KX brings marketplace listings, protected transactions,
             Agent API flows and Risk Intelligence into one network built on Arc.
           </p>
         </div>
@@ -182,7 +182,7 @@ export default function HomePage() {
               </p>
               <h2 className="mt-3 text-2xl font-semibold text-white">Developer Platform</h2>
               <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-400">
-                Integrate Knowledge Exchange capabilities into your own applications and
+                Integrate KX capabilities into your own applications and
                 autonomous agents.
               </p>
               <div className="mt-4 flex flex-wrap gap-2">

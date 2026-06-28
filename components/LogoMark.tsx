@@ -5,7 +5,7 @@ type LogoMarkProps = {
   size?: number;
 };
 
-export function LogoMark({ className, title = "Knowledge Exchange", size = 36 }: LogoMarkProps) {
+export function LogoMark({ className, title = "KX", size = 36 }: LogoMarkProps) {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"

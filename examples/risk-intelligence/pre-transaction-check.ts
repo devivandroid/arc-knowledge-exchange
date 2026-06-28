@@ -1,6 +1,6 @@
 import { RiskIntelligenceClient } from "../../lib/sdk/risk-intelligence";
 
-const baseUrl = process.env.RISK_API_BASE_URL ?? "https://knowledge-exchange.fly.dev";
+const baseUrl = process.env.RISK_API_BASE_URL ?? "https://kx-platform.fly.dev";
 const sellerWallet =
   process.env.SELLER_WALLET ?? "0x8e0a1111111111111111111111111111111125be";
 
@@ -23,7 +23,7 @@ if (guard.decision === "allow") {
 }
 
 if (guard.profileStatus === "no_data") {
-  console.log("No Knowledge Exchange activity was found. No data is not high risk.");
+  console.log("No KX activity was found. No data is not high risk.");
 }
 
 console.log({

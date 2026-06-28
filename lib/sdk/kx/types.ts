@@ -1,0 +1,231 @@
+import type {
+  DeliveryType,
+  InstantResource,
+  LicenseType,
+  ParticipantType,
+  ResourceFile,
+  ResourceType
+} from "@/types/resource";
+import type { RatingSummary, ResourceRating } from "@/lib/ratings";
+import type { RiskGuardPolicy } from "@/lib/sdk/risk-intelligence";
+
+export type KXClientOptions = {
+  baseUrl: string;
+  fetchImpl?: typeof fetch;
+};
+
+export type SearchResourcesParams = {
+  q?: string;
+  resourceType?: ResourceType | string;
+  category?: string;
+  license?: LicenseType | string;
+  agentConsumable?: boolean;
+};
+
+export type ResourceSearchItem = InstantResource & {
+  endpoint?: string;
+  purchaseFlow?: {
+    type: string;
+    verifyEndpoint: string;
+  };
+};
+
+export type SearchResourcesResponse = {
+  resources: ResourceSearchItem[];
+};
+
+export type PublishResourceInput = {
+  id?: string;
+  title: string;
+  description: string;
+  resourceType: ResourceType;
+  category?: string;
+  tags?: string[] | string;
+  priceUSDC: string;
+  license: LicenseType;
+  sellerAddress: string;
+  sellerName?: string;
+  participantType?: ParticipantType;
+  participantName?: string;
+  operatorAddress?: string;
+  deliveryType?: DeliveryType;
+  previewText?: string;
+  unlockedContentMock?: string;
+  files?: ResourceFile[];
+  agentConsumable?: boolean;
+  accessType?: "instant";
+};
+
+export type PublishResourceResponse = {
+  resource: InstantResource;
+  endpoint: string;
+  purchaseEndpoint: string;
+  message: string;
+};
+
+export type PaymentRequiredResponse = {
+  ok: false;
+  error: "PAYMENT_REQUIRED";
+  message: string;
+  resourceId: string;
+  title: string;
+  deliveryType?: string;
+  priceUSDC: string;
+  sellerAddress: string;
+  network: string;
+  chainId: number;
+  chainIdHex: string;
+  usdcAddress: string;
+  paymentInstructions: {
+    method: string;
+    token: "USDC";
+    decimals: number;
+    to: string;
+    amountUSDC: string;
+  };
+  paymentVerificationEndpoint: string;
+  resourceEndpoint?: string;
+};
+
+export type PaymentProof = {
+  txHash: string;
+  buyerAddress: string;
+};
+
+export type VerifyPaymentResponse = {
+  ok: true;
+  accessGranted: true;
+  resourceId: string;
+  receipt: {
+    txHash: string;
+    buyerAddress: string;
+    sellerAddress: string;
+    amountUSDC: string;
+    resourceId: string;
+    license: string;
+    resourceType: string;
+    blockNumber: number;
+  };
+  accessToken: string;
+};
+
+export type UnlockedResourceResponse = {
+  ok: true;
+  id: string;
+  resourceId: string;
+  title: string;
+  deliveryType: "inline" | "download";
+  license: string;
+  resourceType: string;
+  content?: string;
+  files?: Array<{
+    filename: string;
+    mimeType: string;
+    sizeBytes: number;
+    checksum?: string;
+    description?: string;
+    downloadUrl: string;
+  }>;
+  receipt: VerifyPaymentResponse["receipt"];
+};
+
+export type ResourceRatingsResponse = {
+  ok: true;
+  resourceId: string;
+  summary: RatingSummary;
+  userRating: ResourceRating | null;
+};
+
+export type SaveResourceRatingInput = {
+  walletAddress: string;
+  rating: number;
+};
+
+export type SaveResourceRatingResponse = {
+  ok: true;
+  resourceId: string;
+  rating: ResourceRating;
+  summary: RatingSummary;
+  message: string;
+};
+
+export type SearchRequestsParams = {
+  q?: string;
+  category?: string;
+  license?: LicenseType | string;
+  status?: string;
+  agentConsumable?: boolean;
+};
+
+export type RequestDraft = {
+  id: string;
+  title: string;
+  description: string;
+  requirements: string;
+  budgetUSDC: string;
+  license: LicenseType | string;
+  requesterAddress: string;
+  participantType?: ParticipantType;
+  participantName?: string;
+  operatorAddress?: string;
+  providerAddress?: string | null;
+  providerParticipantType?: ParticipantType;
+  providerParticipantName?: string;
+  providerOperatorAddress?: string;
+  status: "Draft" | "Open" | "Submitted" | string;
+  agentConsumable: boolean;
+  detailUrl?: string;
+};
+
+export type SearchRequestsResponse = {
+  requests: RequestDraft[];
+};
+
+export type CreateRequestInput = {
+  title: string;
+  description: string;
+  requirements: string;
+  category?: string;
+  tags?: string[] | string;
+  budgetUSDC: string;
+  license: LicenseType | string;
+  requesterAddress: string;
+  participantType?: ParticipantType;
+  participantName?: string;
+  operatorAddress?: string;
+  agentConsumable?: boolean;
+};
+
+export type CreateRequestResponse = {
+  request: RequestDraft;
+  fundingInstructions: string;
+  roadmap: string;
+};
+
+export type SubmitDeliveryInput = {
+  providerAddress: string;
+  providerParticipantType?: ParticipantType;
+  providerParticipantName?: string;
+  providerOperatorAddress?: string;
+  deliveryText: string;
+  deliveryURI?: string;
+  deliveryHash?: string;
+};
+
+export type SubmitDeliveryResponse = {
+  requestId: string;
+  providerAddress: string;
+  providerParticipantType?: ParticipantType;
+  providerParticipantName?: string;
+  providerOperatorAddress?: string;
+  deliveryHash: string;
+  deliveryURI: string;
+  message: string;
+};
+
+export type AgentCapabilitiesResponse = Record<string, unknown>;
+
+export type RiskGuardInput = {
+  wallet: string;
+  policy: RiskGuardPolicy;
+};

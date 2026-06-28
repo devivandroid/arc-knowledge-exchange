@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import { PageHeader } from "@/components/PageHeader";
 import { PageShell } from "@/components/PageShell";
 import { ResourceCard } from "@/components/ResourceCard";
-import { getAllResources } from "@/lib/localResources";
 import { getInstantResources } from "@/services/resources";
 import type { InstantResource } from "@/types/resource";
 
@@ -18,15 +17,30 @@ export default function MarketplacePage() {
   );
 
   useEffect(() => {
-    setResources(sortFeaturedFirst(getAllResources()));
+    let cancelled = false;
+
+    async function loadResources() {
+      const response = await fetch("/api/resources/search");
+      const body = (await response.json()) as { resources?: InstantResource[] };
+
+      if (!cancelled && body.resources) {
+        setResources(sortFeaturedFirst(body.resources));
+      }
+    }
+
+    loadResources().catch(() => undefined);
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   return (
     <PageShell>
       <PageHeader
         eyebrow="Marketplace"
-        title="Knowledge Marketplace"
-        description="Browse premium datasets, benchmark packages, schemas, templates and machine-readable assets from independent creators. Featured datasets appear first."
+        title="Marketplace"
+        description="Browse premium services, datasets, benchmark packages, schemas, templates and machine-readable assets from independent creators. Featured resources appear first."
       />
 
       <div className="mb-5 rounded-lg border border-amber-300/30 bg-amber-300/10 p-4 text-sm leading-6 text-amber-100">

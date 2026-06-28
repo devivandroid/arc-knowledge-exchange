@@ -11,12 +11,12 @@ export async function GET() {
     legacyEndpoint: "/api/reputation/model",
     publicRiskEndpoint: "/api/risk/model",
     ok: true,
-    name: "Knowledge Exchange Risk Intelligence Model",
-    scope: "Knowledge Exchange activity only",
+    name: "KX Risk Intelligence Model",
+    scope: "KX activity only",
     network: "Arc Testnet",
     positioning: [
       "Participant risk signals for Human & Agent Commerce activity",
-      "Designed for Knowledge Exchange marketplace and escrow events",
+      "Designed for KX marketplace and escrow events",
       "Not an official Arc or Circle score",
       "Does not score all Arc wallets globally"
     ],
@@ -49,7 +49,7 @@ export async function GET() {
         Low: "risk score 0-24",
         Medium: "risk score 25-59",
         High: "risk score 60-100",
-        Unknown: "no Knowledge Exchange activity; no data is not high risk"
+        Unknown: "no KX activity; no data is not high risk"
       },
       activityLevels: {
         Dormant: "no activity or last activity more than 30 days ago",
@@ -58,9 +58,9 @@ export async function GET() {
         High: "more than 5 actions per day"
       },
       profileStatuses: {
-        active: "medium or high confidence Knowledge Exchange evidence is available",
-        limited: "some Knowledge Exchange evidence is available, but confidence is low",
-        no_data: "no Knowledge Exchange activity was found for the wallet"
+        active: "medium or high confidence KX evidence is available",
+        limited: "some KX evidence is available, but confidence is low",
+        no_data: "no KX activity was found for the wallet"
       },
       noDataHandling: {
         rule: "No data is not high risk.",

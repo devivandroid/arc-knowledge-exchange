@@ -1,7 +1,7 @@
 import { Interface, JsonRpcProvider, formatUnits, isAddress, parseUnits } from "ethers";
 import { ARC_TESTNET_CHAIN_ID, ARC_TESTNET_RPC_URL } from "@/lib/chains/arcTestnet";
 import { usdcAddress, usdcDecimals } from "@/lib/contracts/microWorkEscrow";
-import { getServerResourceById } from "@/lib/server/agentMockStore";
+import { getServerResourceByIdAsync } from "@/lib/server/agentMockStore";
 import type { InstantResource } from "@/types/resource";
 
 const erc20Interface = new Interface([
@@ -41,7 +41,7 @@ function getProvider() {
 function createAccessToken(resourceId: string, txHash: string, buyerAddress: string): string {
   return Buffer.from(
     JSON.stringify({
-      typ: "arc-knowledge-exchange-access-proof",
+      typ: "kx-platform-access-proof",
       resourceId,
       txHash,
       buyerAddress,
@@ -59,7 +59,7 @@ export async function verifyInstantPurchase({
   txHash: string;
   buyerAddress: string;
 }): Promise<VerifyInstantPurchaseResult> {
-  const resource = getServerResourceById(resourceId);
+  const resource = await getServerResourceByIdAsync(resourceId);
 
   if (!resource) {
     return {
