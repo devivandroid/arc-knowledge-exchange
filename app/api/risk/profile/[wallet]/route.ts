@@ -13,9 +13,15 @@ type RiskWalletContext = {
 
 export const runtime = "nodejs";
 
+function readUseIndexedData(request: Request): boolean {
+  const value = new URL(request.url).searchParams.get("useIndexedData");
+  return value !== "false";
+}
+
 export async function GET(request: Request, context: RiskWalletContext) {
   const { wallet } = await context.params;
   const source = new URL(request.url).searchParams.get("source");
+  const options = { useIndexedData: readUseIndexedData(request) };
 
   if (!isAddress(wallet)) {
     return NextResponse.json(
@@ -29,8 +35,8 @@ export async function GET(request: Request, context: RiskWalletContext) {
   }
 
   if (source === "arc_network") {
-    return NextResponse.json(toPublicRiskProfileResponse(await getArcNetworkRiskProfileAsync(wallet)));
+    return NextResponse.json(toPublicRiskProfileResponse(await getArcNetworkRiskProfileAsync(wallet, options)));
   }
 
-  return NextResponse.json(toPublicRiskProfileResponse(await getCombinedRiskProfileAsync(wallet)));
+  return NextResponse.json(toPublicRiskProfileResponse(await getCombinedRiskProfileAsync(wallet, options)));
 }

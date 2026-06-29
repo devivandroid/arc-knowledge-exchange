@@ -24,6 +24,8 @@ export type {
 
 export type RiskSdkParticipant = {
   type: RiskParticipantType;
+  userType?: "HUMAN" | "AGENT" | "unknown";
+  entityType?: "INDIVIDUAL" | "BUSINESS" | "ORGANIZATION" | "unknown";
   name: string | null;
   operatorAddress: string | null;
 };
@@ -87,6 +89,14 @@ export type RiskGuardPolicy = {
   minimumConfidenceLevel?: ConfidenceLevel;
   allowUnknownParticipantType?: boolean;
   unknownWalletBehavior?: UnknownWalletBehavior;
+};
+
+export type RiskProfileRequestOptions = {
+  /**
+   * Defaults to true. When true, the API may return the latest indexed Arc
+   * Network snapshot instead of forcing a live reindex.
+   */
+  useIndexedData?: boolean;
 };
 
 export type RiskGuardDecision = "allow" | "review" | "block";
@@ -207,6 +217,8 @@ export type RiskGuardResponse = {
 export type ListParticipantsParams = {
   limit?: number;
   riskTier?: RiskTier | string;
+  userType?: "HUMAN" | "AGENT" | string;
+  entityType?: "INDIVIDUAL" | "BUSINESS" | "ORGANIZATION" | string;
   participantType?: RiskParticipantType | string;
 };
 

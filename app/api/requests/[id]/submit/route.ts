@@ -1,6 +1,13 @@
 import { isAddress } from "ethers";
 import { NextResponse, type NextRequest } from "next/server";
-import { isParticipantType } from "@/lib/participants";
+import {
+  getEntityTypeFromLegacy,
+  getLegacyParticipantType,
+  getUserTypeFromLegacy,
+  isEntityType,
+  isParticipantType,
+  isUserType
+} from "@/lib/participants";
 import { submitServerRequestDeliveryAsync } from "@/lib/server/agentMockStore";
 import { trackReputationEventAsync } from "@/lib/server/reputation/reputationEventStore";
 
@@ -45,6 +52,12 @@ export async function POST(request: NextRequest, context: SubmitRouteContext) {
   const providerParticipantType = isParticipantType(body.providerParticipantType)
     ? body.providerParticipantType
     : undefined;
+  const providerUserType = isUserType(body.providerUserType)
+    ? body.providerUserType
+    : getUserTypeFromLegacy(providerParticipantType);
+  const providerEntityType = isEntityType(body.providerEntityType)
+    ? body.providerEntityType
+    : getEntityTypeFromLegacy(providerParticipantType);
   const providerParticipantName =
     typeof body.providerParticipantName === "string" && body.providerParticipantName.trim()
       ? body.providerParticipantName.trim()
@@ -57,7 +70,9 @@ export async function POST(request: NextRequest, context: SubmitRouteContext) {
   const result = await submitServerRequestDeliveryAsync({
     requestId: id,
     providerAddress: body.providerAddress,
-    providerParticipantType,
+    providerUserType,
+    providerEntityType,
+    providerParticipantType: providerParticipantType ?? getLegacyParticipantType(providerUserType),
     providerParticipantName,
     providerOperatorAddress,
     deliveryText: body.deliveryText,
@@ -76,7 +91,9 @@ export async function POST(request: NextRequest, context: SubmitRouteContext) {
     requestId: id,
     metadata: {
       deliveryHash: result.delivery.deliveryHash,
-      participantType: providerParticipantType ?? null,
+      userType: providerUserType,
+      entityType: providerEntityType,
+      participantType: result.request.providerParticipantType ?? null,
       participantName: providerParticipantName ?? null,
       operatorAddress: providerOperatorAddress ?? null
     }
@@ -85,7 +102,9 @@ export async function POST(request: NextRequest, context: SubmitRouteContext) {
   return NextResponse.json({
     requestId: id,
     providerAddress: result.delivery.providerAddress,
-    providerParticipantType,
+    providerUserType,
+    providerEntityType,
+    providerParticipantType: result.request.providerParticipantType,
     providerParticipantName,
     providerOperatorAddress,
     deliveryHash: result.delivery.deliveryHash,

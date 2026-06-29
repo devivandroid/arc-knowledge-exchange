@@ -1,6 +1,13 @@
 import { isAddress } from "ethers";
 import { NextResponse, type NextRequest } from "next/server";
-import { isParticipantType } from "@/lib/participants";
+import {
+  getEntityTypeFromLegacy,
+  getLegacyParticipantType,
+  getUserTypeFromLegacy,
+  isEntityType,
+  isParticipantType,
+  isUserType
+} from "@/lib/participants";
 import {
   isLicenseType,
   isResourceType,
@@ -64,6 +71,12 @@ export async function POST(request: NextRequest) {
   const participantType = isParticipantType(body.participantType)
     ? body.participantType
     : undefined;
+  const userType = isUserType(body.userType)
+    ? body.userType
+    : getUserTypeFromLegacy(participantType);
+  const entityType = isEntityType(body.entityType)
+    ? body.entityType
+    : getEntityTypeFromLegacy(participantType);
   const participantName =
     typeof body.participantName === "string" && body.participantName.trim()
       ? body.participantName.trim()
@@ -92,7 +105,9 @@ export async function POST(request: NextRequest) {
     priceUSDC,
     license: body.license,
     sellerName: participantName,
-    participantType,
+    userType,
+    entityType,
+    participantType: participantType ?? getLegacyParticipantType(userType),
     participantName,
     operatorAddress,
     sellerAddress,

@@ -1,6 +1,7 @@
 import type {
   ListParticipantsParams,
   RiskIntelligenceClientOptions,
+  RiskProfileRequestOptions,
   RiskGuardPolicy,
   RiskGuardResponse,
   RiskModelResponse,
@@ -32,7 +33,10 @@ function normalizeBaseUrl(baseUrl: string): string {
   return normalized;
 }
 
-function appendQuery(path: string, params?: Record<string, string | number | undefined>): string {
+function appendQuery(
+  path: string,
+  params?: Record<string, string | number | boolean | undefined>
+): string {
   const search = new URLSearchParams();
 
   for (const [key, value] of Object.entries(params ?? {})) {
@@ -60,16 +64,38 @@ export class RiskIntelligenceClient {
     }
   }
 
-  getProfile(wallet: string): Promise<RiskProfileResponse> {
-    return this.get(`/api/risk/profile/${encodeURIComponent(wallet)}`);
+  getProfile(
+    wallet: string,
+    options: RiskProfileRequestOptions = {}
+  ): Promise<RiskProfileResponse> {
+    return this.get(
+      appendQuery(`/api/risk/profile/${encodeURIComponent(wallet)}`, {
+        useIndexedData: options.useIndexedData
+      })
+    );
   }
 
-  getCombinedProfile(wallet: string): Promise<RiskProfileResponse> {
-    return this.get(`/api/risk/profile/${encodeURIComponent(wallet)}?source=combined`);
+  getCombinedProfile(
+    wallet: string,
+    options: RiskProfileRequestOptions = {}
+  ): Promise<RiskProfileResponse> {
+    return this.get(
+      appendQuery(`/api/risk/profile/${encodeURIComponent(wallet)}`, {
+        source: "combined",
+        useIndexedData: options.useIndexedData
+      })
+    );
   }
 
-  getNetworkProfile(wallet: string): Promise<RiskProfileResponse> {
-    return this.get(`/api/risk/network/${encodeURIComponent(wallet)}`);
+  getNetworkProfile(
+    wallet: string,
+    options: RiskProfileRequestOptions = {}
+  ): Promise<RiskProfileResponse> {
+    return this.get(
+      appendQuery(`/api/risk/network/${encodeURIComponent(wallet)}`, {
+        useIndexedData: options.useIndexedData
+      })
+    );
   }
 
   getSummary(wallet: string): Promise<RiskSummaryResponse> {
@@ -89,6 +115,8 @@ export class RiskIntelligenceClient {
       appendQuery("/api/risk/participants", {
         limit: params?.limit,
         riskTier: params?.riskTier,
+        userType: params?.userType,
+        entityType: params?.entityType,
         participantType: params?.participantType
       })
     );

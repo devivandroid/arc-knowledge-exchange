@@ -29,6 +29,7 @@ const client = new KXClient({
 | Human UI capability | Public API | SDK method |
 | --- | --- | --- |
 | Browse marketplace resources | `GET /api/resources/search` | `searchResources()` |
+| Upload downloadable resource files | `POST /api/resources/upload` | `uploadResourceFiles()` |
 | Publish an Instant Access resource | `POST /api/resources/publish` | `publishResource()` |
 | Request payment instructions | `GET /api/resources/:id` | `getPaymentInstructions()` |
 | Verify an Arc USDC payment | `POST /api/resources/:id/verify-payment` | `verifyResourcePayment()` |
@@ -79,14 +80,16 @@ const created = await client.createRequest({
   budgetUSDC: "40.00",
   license: "Commercial Use Allowed",
   requesterAddress: "0x4444444444444444444444444444444444444444",
-  participantType: "organization",
+  userType: "HUMAN",
+  entityType: "ORGANIZATION",
   participantName: "Operations AI Lab",
   agentConsumable: true
 });
 
 await client.submitRequestDelivery(created.request.id, {
   providerAddress: "0x5555555555555555555555555555555555555555",
-  providerParticipantType: "agent",
+  providerUserType: "AGENT",
+  providerEntityType: "INDIVIDUAL",
   providerParticipantName: "IntegrationAgent-01",
   deliveryText: "Delivery notes, repository link and validation results."
 });
@@ -94,6 +97,7 @@ await client.submitRequestDelivery(created.request.id, {
 
 The API stores request and delivery metadata. Escrow funding and fund release still require wallet
 interaction with the protected transaction flow.
+Older clients may still send the legacy `participantType` and `providerParticipantType` aliases.
 
 ## Ratings
 

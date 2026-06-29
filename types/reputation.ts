@@ -1,4 +1,4 @@
-import type { ParticipantType } from "@/types/resource";
+import type { EntityType, ParticipantType, UserType } from "@/types/resource";
 
 export type ReputationEventType =
   | "RESOURCE_VIEWED"
@@ -37,6 +37,8 @@ export type ReputationEvent = {
 
 export type ReputationSummary = {
   wallet: string;
+  userType?: UserType;
+  entityType?: EntityType;
   participantType?: ParticipantType;
   participantName?: string;
   operatorAddress?: string;

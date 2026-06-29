@@ -1,4 +1,10 @@
-import { isParticipantType } from "@/lib/participants";
+import {
+  getEntityTypeFromLegacy,
+  getUserTypeFromLegacy,
+  isEntityType,
+  isParticipantType,
+  isUserType
+} from "@/lib/participants";
 import type {
   ActivityLevel,
   BehavioralSignalStatus,
@@ -70,7 +76,10 @@ function getActivityLevel({
 
 function buildEmptySummary(
   wallet: string,
-  participant: Pick<ReputationSummary, "participantType" | "participantName" | "operatorAddress">
+  participant: Pick<
+    ReputationSummary,
+    "userType" | "entityType" | "participantType" | "participantName" | "operatorAddress"
+  >
 ): ReputationSummary {
   return {
     wallet,
@@ -123,11 +132,17 @@ export function calculateReputation(wallet: string, events: ReputationEvent[]): 
     (event) => event.walletAddress.toLowerCase() === wallet.toLowerCase()
   );
   const participantMetadata = walletEvents.find((event) =>
-    isParticipantType(event.metadata?.participantType)
+    isUserType(event.metadata?.userType) || isParticipantType(event.metadata?.participantType)
   )?.metadata;
   const participantType = isParticipantType(participantMetadata?.participantType)
     ? participantMetadata.participantType
     : undefined;
+  const userType = isUserType(participantMetadata?.userType)
+    ? participantMetadata.userType
+    : getUserTypeFromLegacy(participantType);
+  const entityType = isEntityType(participantMetadata?.entityType)
+    ? participantMetadata.entityType
+    : getEntityTypeFromLegacy(participantType);
   const participantName =
     typeof participantMetadata?.participantName === "string"
       ? participantMetadata.participantName
@@ -186,7 +201,13 @@ export function calculateReputation(wallet: string, events: ReputationEvent[]): 
     totalCompletedVolume > 0 ? largestCounterpartyVolume / totalCompletedVolume : 0;
 
   if (evidenceCount === 0) {
-    return buildEmptySummary(wallet, { participantType, participantName, operatorAddress });
+    return buildEmptySummary(wallet, {
+      userType,
+      entityType,
+      participantType,
+      participantName,
+      operatorAddress
+    });
   }
 
   let score = 500;
@@ -325,7 +346,7 @@ export function calculateReputation(wallet: string, events: ReputationEvent[]): 
 
   if (!participantType) {
     pushRisk(
-      "Unknown participant type",
+      "Unknown user type",
       "Monitor",
       "Participant metadata is unavailable for this wallet."
     );
@@ -395,6 +416,8 @@ export function calculateReputation(wallet: string, events: ReputationEvent[]): 
 
   return {
     wallet,
+    userType,
+    entityType,
     participantType,
     participantName,
     operatorAddress,

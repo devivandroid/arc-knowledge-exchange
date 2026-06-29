@@ -8,6 +8,7 @@ export async function GET(request: NextRequest) {
   const q = params.get("q")?.toLowerCase();
   const category = params.get("category")?.toLowerCase();
   const license = params.get("license");
+  const resourceType = params.get("resourceType");
   const status = params.get("status");
   const agentConsumable = params.get("agentConsumable");
 
@@ -18,6 +19,7 @@ export async function GET(request: NextRequest) {
 
     if (q && !text.includes(q)) return false;
     if (category && item.category.toLowerCase() !== category) return false;
+    if (resourceType && (item.resourceType || "Custom Service") !== resourceType) return false;
     if (license && item.license !== license) return false;
     if (status && item.status !== status) return false;
     if (agentConsumable && String(item.agentConsumable) !== agentConsumable) return false;
@@ -33,10 +35,15 @@ export async function GET(request: NextRequest) {
       budgetUSDC: item.budgetUSDC,
       license: item.license,
       requesterAddress: item.requesterAddress,
+      userType: item.userType ?? null,
+      entityType: item.entityType ?? null,
       participantType: item.participantType,
       participantName: item.participantName,
       operatorAddress: item.operatorAddress,
+      resourceType: item.resourceType || "Custom Service",
       providerAddress: item.providerAddress ?? null,
+      providerUserType: item.providerUserType ?? null,
+      providerEntityType: item.providerEntityType ?? null,
       providerParticipantType: item.providerParticipantType,
       providerParticipantName: item.providerParticipantName,
       providerOperatorAddress: item.providerOperatorAddress,

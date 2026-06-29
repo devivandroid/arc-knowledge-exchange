@@ -12,6 +12,8 @@ type ReputationLookupResult = {
   recommendation?: string;
   participant?: {
     type: string;
+    userType?: string;
+    entityType?: string;
     name: string | null;
     operatorAddress: string | null;
   };
@@ -164,9 +166,22 @@ function getVisibleBehavioralSignals(result: ReputationLookupResult) {
   );
 }
 
+function getParticipantDisplay(result: ReputationLookupResult): string {
+  const userType = result.participant?.userType ?? result.participant?.type ?? "unknown";
+  const entityType = result.participant?.entityType ?? "unknown";
+  const participantLabel = `${userType} / ${entityType}`;
+
+  if (result.participant?.name) {
+    return `${result.participant.name} · ${participantLabel}`;
+  }
+
+  return userType === "unknown" && entityType === "unknown" ? "Unknown user and entity type" : participantLabel;
+}
+
 export function ReputationLookup() {
   const [wallet, setWallet] = useState("");
   const [source, setSource] = useState<RiskSource>("combined");
+  const [useIndexedData, setUseIndexedData] = useState(true);
   const [result, setResult] = useState<ReputationLookupResult | null>(null);
   const [breakdown, setBreakdown] = useState<RiskBreakdown>({ internal: null, network: null });
   const [error, setError] = useState("");
@@ -180,12 +195,12 @@ export function ReputationLookup() {
     try {
       const endpoint =
         source === "arc_network"
-          ? `/api/risk/network/${wallet}`
-          : `/api/risk/profile/${wallet}?source=${source}`;
+          ? `/api/risk/network/${wallet}?useIndexedData=${useIndexedData}`
+          : `/api/risk/profile/${wallet}?source=${source}&useIndexedData=${useIndexedData}`;
       const [response, internalResponse, networkResponse] = await Promise.all([
         fetch(endpoint),
         fetch(`/api/risk/profile/${wallet}?source=internal`),
-        fetch(`/api/risk/network/${wallet}`)
+        fetch(`/api/risk/network/${wallet}?useIndexedData=${useIndexedData}`)
       ]);
       const body = await response.json();
       if (!response.ok) {
@@ -249,6 +264,20 @@ export function ReputationLookup() {
           {loading ? "Checking..." : "Check Risk Intelligence"}
         </button>
       </div>
+      <label className="mt-3 flex max-w-max items-start gap-2 text-xs text-slate-400">
+        <input
+          type="checkbox"
+          checked={useIndexedData}
+          onChange={(event) => setUseIndexedData(event.target.checked)}
+          className="mt-0.5 h-4 w-4 rounded border-arc-border bg-black/30 accent-arc-blue"
+        />
+        <span>
+          <span className="font-semibold text-slate-200">Use indexed data</span>
+          <span className="block">
+            Uses a stored Arc Network snapshot if it is less than 1 minute old. Uncheck to refresh from Arc.
+          </span>
+        </span>
+      </label>
       {error ? (
         <p className="mt-3 rounded-lg border border-red-300/30 bg-red-300/10 p-3 text-sm text-red-100">
           {error}
@@ -277,11 +306,7 @@ export function ReputationLookup() {
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <p className="font-semibold text-white">
-                {result.participant?.name
-                  ? `${result.participant.name} · ${result.participant.type}`
-                  : result.participant?.type === "unknown"
-                    ? "Unknown participant type"
-                    : result.participant?.type}
+                {getParticipantDisplay(result)}
               </p>
               <p className="mt-1 break-all text-xs text-slate-500">{result.wallet}</p>
               <p className="mt-1 text-xs uppercase tracking-normal text-slate-500">

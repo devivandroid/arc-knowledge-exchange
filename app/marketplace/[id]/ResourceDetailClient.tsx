@@ -11,7 +11,11 @@ import { TransactionStatus, type TransactionState } from "@/components/Transacti
 import { useUsdc } from "@/hooks/useUsdc";
 import { useWallet } from "@/hooks/useWallet";
 import { usdcDecimals } from "@/lib/contracts/microWorkEscrow";
-import { getParticipantBadgeClass, getParticipantLabel } from "@/lib/participants";
+import {
+  getEntityTypeLabel,
+  getParticipantBadgeClass,
+  getUserTypeLabel
+} from "@/lib/participants";
 import { getPurchases, savePurchase, type InstantAccessPurchase } from "@/lib/purchases";
 import {
   getRatingSummary,
@@ -361,7 +365,7 @@ export function ResourceDetailClient({ initialResource, resourceId }: ResourceDe
                 resource.participantType
               )}`}
             >
-              {getParticipantLabel(resource.participantType)}
+              {getUserTypeLabel(resource.userType)}
             </span>
             {resource.agentConsumable ? (
               <span className="rounded-full border border-arc-blue/40 bg-arc-blue/10 px-3 py-1 text-xs font-semibold text-arc-blue">
@@ -412,8 +416,12 @@ export function ResourceDetailClient({ initialResource, resourceId }: ResourceDe
               </dd>
             </div>
             <div>
-              <dt className="text-slate-500">Participant type</dt>
-              <dd className="mt-1 text-white">{getParticipantLabel(resource.participantType)}</dd>
+              <dt className="text-slate-500">User Type</dt>
+              <dd className="mt-1 text-white">{getUserTypeLabel(resource.userType)}</dd>
+            </div>
+            <div>
+              <dt className="text-slate-500">Entity Type</dt>
+              <dd className="mt-1 text-white">{getEntityTypeLabel(resource.entityType)}</dd>
             </div>
             {resource.operatorAddress ? (
               <div>

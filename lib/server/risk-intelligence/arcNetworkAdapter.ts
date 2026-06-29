@@ -4,8 +4,10 @@ import {
   ARC_TESTNET_NATIVE_CURRENCY,
   ARC_TESTNET_RPC_URL
 } from "@/lib/chains/arcTestnet";
-import { getArcscanAddressStats } from "@/lib/server/risk-intelligence/arcscanAdapter";
-import { indexArcNetworkSnapshot } from "@/lib/server/risk-intelligence/arcNetworkIndexer";
+import {
+  indexArcNetworkSnapshot,
+  type ArcNetworkIndexOptions
+} from "@/lib/server/risk-intelligence/arcNetworkIndexer";
 import type { RiskProfile } from "@/lib/server/risk-intelligence/types";
 
 const rpcUrl = process.env.NEXT_PUBLIC_RPC_URL || ARC_TESTNET_RPC_URL;
@@ -80,12 +82,13 @@ function getRiskTier(riskScore: number): RiskProfile["scores"]["riskTier"] {
   return "High";
 }
 
-export async function getArcNetworkRiskProfile(wallet: string): Promise<RiskProfile> {
+export async function getArcNetworkRiskProfile(
+  wallet: string,
+  options: ArcNetworkIndexOptions = {}
+): Promise<RiskProfile> {
   try {
-    const [snapshot, arcscanStats] = await Promise.all([
-      indexArcNetworkSnapshot(wallet),
-      getArcscanAddressStats(wallet)
-    ]);
+    const snapshot = await indexArcNetworkSnapshot(wallet, options);
+    const arcscanStats = snapshot.arcscanStats ?? null;
     const networkTransactions =
       arcscanStats?.transactionsCount ?? snapshot.usdcTransferTransactions;
     const networkTransfers = arcscanStats?.transfersCount ?? snapshot.usdcTransfers;

@@ -119,7 +119,10 @@ export async function GET(request: NextRequest, context: DownloadRouteContext) {
     metadata: { filename }
   });
 
-  const webStream = Readable.toWeb(file.stream) as ReadableStream;
+  const webStream =
+    file.stream instanceof Readable
+      ? (Readable.toWeb(file.stream) as ReadableStream)
+      : file.stream;
   return new Response(webStream, {
     status: 200,
     headers: {

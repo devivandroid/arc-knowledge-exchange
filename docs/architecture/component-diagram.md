@@ -51,7 +51,7 @@ flowchart TB
   protected -->|"USDC escrow settlement"| usdc
   usdc --> arc
 
-  data -. "future persistent event store" .-> postgres
+  data -->|"persistent events and network snapshots"| postgres
   marketplace -. "future durable resource storage" .-> ipfs
   requests -. "future delivery artifacts" .-> ipfs
 ```

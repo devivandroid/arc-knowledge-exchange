@@ -10,16 +10,26 @@ export function isPostgresEnabled(): boolean {
 }
 
 function getPool(): Pool {
-  if (!process.env.DATABASE_URL) {
+  const databaseUrl = process.env.DATABASE_URL;
+
+  if (!databaseUrl) {
     throw new Error("DATABASE_URL is not configured.");
+  }
+
+  try {
+    new URL(databaseUrl);
+  } catch {
+    throw new Error(
+      `DATABASE_URL is invalid. Length=${databaseUrl.length}. Make sure special password characters are URL-encoded.`
+    );
   }
 
   if (!globalForPostgres.knowledgeExchangePgPool) {
     globalForPostgres.knowledgeExchangePgPool = new Pool({
-      connectionString: process.env.DATABASE_URL,
+      connectionString: databaseUrl,
       ssl:
-        process.env.DATABASE_URL.includes("localhost") ||
-        process.env.DATABASE_URL.includes("127.0.0.1")
+        databaseUrl.includes("localhost") ||
+        databaseUrl.includes("127.0.0.1")
           ? undefined
           : { rejectUnauthorized: false }
     });
@@ -70,6 +80,8 @@ export async function ensurePostgresSchema(): Promise<void> {
 
         CREATE TABLE IF NOT EXISTS participants (
           wallet_address TEXT PRIMARY KEY,
+          user_type TEXT,
+          entity_type TEXT,
           participant_type TEXT,
           participant_name TEXT,
           operator_address TEXT,
@@ -87,6 +99,20 @@ export async function ensurePostgresSchema(): Promise<void> {
           PRIMARY KEY (resource_id, wallet_address)
         );
 
+        CREATE TABLE IF NOT EXISTS resource_files (
+          resource_id TEXT NOT NULL,
+          filename TEXT NOT NULL,
+          mime_type TEXT NOT NULL,
+          size_bytes BIGINT NOT NULL,
+          checksum TEXT,
+          storage_provider TEXT NOT NULL DEFAULT 'local',
+          storage_key TEXT NOT NULL,
+          data JSONB NOT NULL DEFAULT '{}'::jsonb,
+          created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+          updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+          PRIMARY KEY (resource_id, filename)
+        );
+
         CREATE TABLE IF NOT EXISTS arc_network_snapshots (
           wallet_address TEXT PRIMARY KEY,
           data JSONB NOT NULL,
@@ -100,7 +126,12 @@ export async function ensurePostgresSchema(): Promise<void> {
         CREATE INDEX IF NOT EXISTS risk_events_wallet_idx ON risk_events (LOWER(wallet_address));
         CREATE INDEX IF NOT EXISTS risk_events_occurred_at_idx ON risk_events (occurred_at DESC);
         CREATE INDEX IF NOT EXISTS resource_ratings_resource_idx ON resource_ratings (resource_id);
+        CREATE INDEX IF NOT EXISTS resource_files_resource_idx ON resource_files (resource_id);
         CREATE INDEX IF NOT EXISTS arc_network_snapshots_updated_idx ON arc_network_snapshots (updated_at DESC);
+      `);
+      await pool.query(`
+        ALTER TABLE participants ADD COLUMN IF NOT EXISTS user_type TEXT;
+        ALTER TABLE participants ADD COLUMN IF NOT EXISTS entity_type TEXT;
       `);
     })();
   }
@@ -120,6 +151,8 @@ export async function pgQuery<T extends QueryResultRow>(
 export async function upsertParticipant(input: {
   walletAddress?: string | null;
   participantType?: string | null;
+  userType?: string | null;
+  entityType?: string | null;
   participantName?: string | null;
   operatorAddress?: string | null;
   data?: Record<string, unknown>;
@@ -130,14 +163,18 @@ export async function upsertParticipant(input: {
     `
       INSERT INTO participants (
         wallet_address,
+        user_type,
+        entity_type,
         participant_type,
         participant_name,
         operator_address,
         data,
         updated_at
       )
-      VALUES ($1, $2, $3, $4, $5::jsonb, NOW())
+      VALUES ($1, $2, $3, $4, $5, $6, $7::jsonb, NOW())
       ON CONFLICT (wallet_address) DO UPDATE SET
+        user_type = COALESCE(EXCLUDED.user_type, participants.user_type),
+        entity_type = COALESCE(EXCLUDED.entity_type, participants.entity_type),
         participant_type = COALESCE(EXCLUDED.participant_type, participants.participant_type),
         participant_name = COALESCE(EXCLUDED.participant_name, participants.participant_name),
         operator_address = COALESCE(EXCLUDED.operator_address, participants.operator_address),
@@ -146,6 +183,8 @@ export async function upsertParticipant(input: {
     `,
     [
       input.walletAddress,
+      input.userType ?? null,
+      input.entityType ?? null,
       input.participantType ?? null,
       input.participantName ?? null,
       input.operatorAddress ?? null,

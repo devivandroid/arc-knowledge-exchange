@@ -160,14 +160,24 @@ function combineProfiles(internalProfile: RiskProfile, networkProfile: RiskProfi
   };
 }
 
-export async function getArcNetworkRiskProfileAsync(wallet: string): Promise<RiskProfile> {
-  return getArcNetworkRiskProfile(wallet);
+export type RiskProfileReadOptions = {
+  useIndexedData?: boolean;
+};
+
+export async function getArcNetworkRiskProfileAsync(
+  wallet: string,
+  options: RiskProfileReadOptions = {}
+): Promise<RiskProfile> {
+  return getArcNetworkRiskProfile(wallet, options);
 }
 
-export async function getCombinedRiskProfileAsync(wallet: string): Promise<RiskProfile> {
+export async function getCombinedRiskProfileAsync(
+  wallet: string,
+  options: RiskProfileReadOptions = {}
+): Promise<RiskProfile> {
   const [internalProfile, networkProfile] = await Promise.all([
     getRiskProfileAsync(wallet),
-    getArcNetworkRiskProfileAsync(wallet)
+    getArcNetworkRiskProfileAsync(wallet, options)
   ]);
 
   return combineProfiles(internalProfile, networkProfile);
@@ -216,6 +226,8 @@ export function toRiskSummaryResponse(profile: RiskProfile) {
     recommendation: profile.recommendation,
     participant: {
       type: profile.participant.type,
+      userType: profile.participant.userType ?? "unknown",
+      entityType: profile.participant.entityType ?? "unknown",
       name: profile.participant.name ?? null,
       operatorAddress: profile.participant.operatorAddress ?? null
     },
@@ -406,7 +418,7 @@ export function evaluateRiskGuard(wallet: string, policy: RiskGuardPolicy = {}) 
       expected: `>= ${normalizedPolicy.minimumConfidenceLevel}`
     },
     {
-      label: "Participant type known",
+      label: "User type known",
       passed:
         normalizedPolicy.allowUnknownParticipantType || profile.participant.type !== "unknown",
       value: profile.participant.type,
@@ -451,6 +463,8 @@ export function evaluateRiskGuard(wallet: string, policy: RiskGuardPolicy = {}) 
       scores: profile.scores,
       participant: {
         type: profile.participant.type,
+        userType: profile.participant.userType ?? "unknown",
+        entityType: profile.participant.entityType ?? "unknown",
         name: profile.participant.name ?? null,
         operatorAddress: profile.participant.operatorAddress ?? null
       }
@@ -493,7 +507,7 @@ export async function evaluateRiskGuardAsync(wallet: string, policy: RiskGuardPo
       expected: `>= ${normalizedPolicy.minimumConfidenceLevel}`
     },
     {
-      label: "Participant type known",
+      label: "User type known",
       passed:
         normalizedPolicy.allowUnknownParticipantType || profile.participant.type !== "unknown",
       value: profile.participant.type,
@@ -538,6 +552,8 @@ export async function evaluateRiskGuardAsync(wallet: string, policy: RiskGuardPo
       scores: profile.scores,
       participant: {
         type: profile.participant.type,
+        userType: profile.participant.userType ?? "unknown",
+        entityType: profile.participant.entityType ?? "unknown",
         name: profile.participant.name ?? null,
         operatorAddress: profile.participant.operatorAddress ?? null
       }

@@ -15,6 +15,9 @@ const client = new RiskIntelligenceClient({
 const profile = await client.getProfile("0x...");
 const network = await client.getNetworkProfile("0x...");
 const combined = await client.getCombinedProfile("0x...");
+const refreshedNetwork = await client.getNetworkProfile("0x...", {
+  useIndexedData: false
+});
 const summary = await client.getSummary("0x...");
 const signals = await client.getSignals("0x...");
 const participants = await client.listParticipants({ limit: 10 });
@@ -30,8 +33,8 @@ const guard = await client.evaluateTransactionRisk("0x...", {
 ## Methods
 
 - `getProfile(wallet)` returns the full combined participant risk profile.
-- `getNetworkProfile(wallet)` returns the Arc Testnet RPC activity profile.
-- `getCombinedProfile(wallet)` explicitly requests the combined profile.
+- `getNetworkProfile(wallet, options)` returns the Arc Testnet activity profile.
+- `getCombinedProfile(wallet, options)` explicitly requests the combined profile.
 - `getSummary(wallet)` returns a compact profile for lightweight integrations.
 - `getSignals(wallet)` returns behavioral and risk signals only.
 - `getModel()` returns scoring methodology, tiers, confidence rules and limitations.
@@ -42,6 +45,9 @@ const guard = await client.evaluateTransactionRisk("0x...", {
 - `isRiskBelow(wallet, riskScore)` checks whether a numeric risk score is below a threshold.
 - `isRiskAbove(wallet, riskScore)` checks whether a numeric risk score is above a threshold.
 - `hasRiskData(wallet)` returns `false` only for `profileStatus === "no_data"`.
+
+Arc Network reads prefer indexed data by default when a snapshot is less than 1 minute old. Pass
+`{ useIndexedData: false }` to force a fresh Arc Network refresh for a wallet.
 
 ## Risk Guard
 

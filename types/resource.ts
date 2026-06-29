@@ -1,8 +1,12 @@
 export type AccessType = "instant" | "manual";
 export type DeliveryType = "inline" | "download";
+export type UserType = "HUMAN" | "AGENT";
+export type EntityType = "INDIVIDUAL" | "BUSINESS" | "ORGANIZATION";
 export type ParticipantType = "human" | "agent" | "organization";
 
 export type ParticipantMetadata = {
+  userType?: UserType;
+  entityType?: EntityType;
   participantType?: ParticipantType;
   participantName?: string;
   operatorAddress?: string;
@@ -32,6 +36,7 @@ export type ResourceType =
   | "Design"
   | "Course"
   | "Subscription"
+  | "Cybersecurity"
   | "Dataset"
   | "Prompt"
   | "Technical Guide"
@@ -56,6 +61,8 @@ export type InstantResource = {
   featured?: boolean;
   featuredLabel?: string;
   sellerName?: string;
+  userType?: UserType;
+  entityType?: EntityType;
   participantType?: ParticipantType;
   participantName?: string;
   operatorAddress?: string;
@@ -80,9 +87,13 @@ export type ManualRequestMetadata = {
   accessType: "manual";
   requesterAddress?: string;
   providerAddress?: string;
+  userType?: UserType;
+  entityType?: EntityType;
   participantType?: ParticipantType;
   participantName?: string;
   operatorAddress?: string;
+  providerUserType?: UserType;
+  providerEntityType?: EntityType;
   providerParticipantType?: ParticipantType;
   providerParticipantName?: string;
   providerOperatorAddress?: string;
@@ -113,6 +124,7 @@ export const resourceTypeValues: ResourceType[] = [
   "Design",
   "Course",
   "Subscription",
+  "Cybersecurity",
   "Dataset",
   "Prompt",
   "Technical Guide",
@@ -126,3 +138,5 @@ export const resourceTypeValues: ResourceType[] = [
 ];
 
 export const participantTypeValues: ParticipantType[] = ["human", "agent", "organization"];
+export const userTypeValues: UserType[] = ["HUMAN", "AGENT"];
+export const entityTypeValues: EntityType[] = ["INDIVIDUAL", "BUSINESS", "ORGANIZATION"];

@@ -27,9 +27,11 @@ import type {
   SubmitDeliveryInput,
   SubmitDeliveryResponse,
   UnlockedResourceResponse,
+  UploadResourceFilesResponse,
   VerifyPaymentResponse
 } from "@/lib/sdk/kx/types";
 import type { ListParticipantsParams } from "@/lib/sdk/risk-intelligence/types";
+import type { RiskProfileRequestOptions } from "@/lib/sdk/risk-intelligence/types";
 
 export class KXClientError extends Error {
   readonly status?: number;
@@ -107,6 +109,23 @@ export class KXClient {
     return this.post("/api/resources/publish", input);
   }
 
+  uploadResourceFiles(
+    resourceId: string,
+    files: Array<File | Blob>
+  ): Promise<UploadResourceFilesResponse> {
+    const formData = new FormData();
+    formData.set("resourceId", resourceId);
+
+    for (const file of files) {
+      formData.append("files", file);
+    }
+
+    return this.request("/api/resources/upload", {
+      method: "POST",
+      body: formData
+    });
+  }
+
   getPaymentInstructions(resourceId: string): Promise<PaymentRequiredResponse> {
     return this.get(`/api/resources/${encodeURIComponent(resourceId)}`, {
       expectedStatuses: [402]
@@ -173,16 +192,25 @@ export class KXClient {
     return this.post(`/api/requests/${encodeURIComponent(requestId)}/submit`, input);
   }
 
-  getRiskProfile(wallet: string): Promise<RiskProfileResponse> {
-    return this.risk.getProfile(wallet);
+  getRiskProfile(
+    wallet: string,
+    options?: RiskProfileRequestOptions
+  ): Promise<RiskProfileResponse> {
+    return this.risk.getProfile(wallet, options);
   }
 
-  getNetworkProfile(wallet: string): Promise<RiskProfileResponse> {
-    return this.risk.getNetworkProfile(wallet);
+  getNetworkProfile(
+    wallet: string,
+    options?: RiskProfileRequestOptions
+  ): Promise<RiskProfileResponse> {
+    return this.risk.getNetworkProfile(wallet, options);
   }
 
-  getCombinedProfile(wallet: string): Promise<RiskProfileResponse> {
-    return this.risk.getCombinedProfile(wallet);
+  getCombinedProfile(
+    wallet: string,
+    options?: RiskProfileRequestOptions
+  ): Promise<RiskProfileResponse> {
+    return this.risk.getCombinedProfile(wallet, options);
   }
 
   getRiskSummary(wallet: string): Promise<RiskSummaryResponse> {
@@ -247,6 +275,28 @@ export class KXClient {
           "Content-Type": "application/json"
         },
         body: JSON.stringify(payload)
+      });
+    } catch (error) {
+      throw new KXClientError(
+        `KX request failed before receiving a response: ${url}`,
+        { details: error }
+      );
+    }
+
+    return this.parseJsonResponse<T>(response);
+  }
+
+  private async request<T>(path: string, init: RequestInit): Promise<T> {
+    const url = `${this.baseUrl}${path}`;
+    let response: Response;
+
+    try {
+      response = await this.fetchImpl(url, {
+        ...init,
+        headers: {
+          Accept: "application/json",
+          ...(init.headers ?? {})
+        }
       });
     } catch (error) {
       throw new KXClientError(

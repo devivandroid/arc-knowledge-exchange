@@ -8,7 +8,8 @@ const response = await client.listParticipants({ limit: 10 });
 for (const participant of response.participants) {
   console.log({
     wallet: participant.wallet,
-    participantType: participant.participant.type,
+    userType: participant.participant.userType,
+    entityType: participant.participant.entityType,
     participantName: participant.participant.name,
     financialBehaviorScore: participant.summary.financialBehaviorScore,
     riskTier: participant.summary.riskTier,

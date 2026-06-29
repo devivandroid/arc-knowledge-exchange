@@ -23,9 +23,13 @@ export function toRiskProfileApiResponse(profile: RiskProfile) {
     chainId: ARC_TESTNET_CHAIN_ID,
     participant: {
       type: profile.participant.type,
+      userType: profile.participant.userType ?? "unknown",
+      entityType: profile.participant.entityType ?? "unknown",
       name: profile.participant.name ?? null,
       operatorAddress: profile.participant.operatorAddress ?? null
     },
+    userType: profile.participant.userType ?? null,
+    entityType: profile.participant.entityType ?? null,
     participantType: profile.participant.type,
     participantName: profile.participant.name ?? null,
     operatorAddress: profile.participant.operatorAddress ?? null,

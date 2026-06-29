@@ -1,7 +1,12 @@
 import Link from "next/link";
 import { TaskStatusBadge } from "@/components/TaskStatusBadge";
 import type { EscrowTask } from "@/lib/contracts/microWorkEscrow";
-import { getParticipantBadgeClass, getParticipantLabel } from "@/lib/participants";
+import {
+  getEntityTypeLabel,
+  getParticipantBadgeClass,
+  getUserTypeFromLegacy,
+  getUserTypeLabel
+} from "@/lib/participants";
 import {
   getTaskDisplayDescription,
   getTaskDisplayTitle,
@@ -60,7 +65,7 @@ export function TaskCard({ task }: TaskCardProps) {
                 metadata?.participantType
               )}`}
             >
-              {getParticipantLabel(metadata?.participantType)}
+              {getUserTypeLabel(metadata?.userType ?? getUserTypeFromLegacy(metadata?.participantType))}
             </span>
           ) : null}
           <TaskStatusBadge status={status} />
@@ -71,6 +76,11 @@ export function TaskCard({ task }: TaskCardProps) {
         <div className="mt-4 grid gap-1 text-xs text-slate-500">
           <p>License: {metadata?.license || "Not specified"}</p>
           <p>Type: {metadata?.resourceType || "Custom Service"}</p>
+          <p>
+            User / entity:{" "}
+            {getUserTypeLabel(metadata?.userType ?? getUserTypeFromLegacy(metadata?.participantType))} /{" "}
+            {getEntityTypeLabel(metadata?.entityType)}
+          </p>
           <p>
             Requester: {metadata?.participantName ? `${metadata.participantName} - ` : ""}
             <a

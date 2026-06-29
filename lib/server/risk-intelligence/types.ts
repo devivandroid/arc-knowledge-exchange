@@ -32,6 +32,8 @@ export interface RiskProfile {
   recommendation?: string;
   participant: {
     type: RiskParticipantType;
+    userType?: "HUMAN" | "AGENT" | "unknown";
+    entityType?: "INDIVIDUAL" | "BUSINESS" | "ORGANIZATION" | "unknown";
     name?: string;
     operatorAddress?: string;
   };

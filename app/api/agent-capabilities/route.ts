@@ -98,6 +98,13 @@ export async function GET() {
           "priceUSDC",
           "license",
           "sellerAddress"
+        ],
+        optionalFields: [
+          "userType",
+          "entityType",
+          "participantType",
+          "participantName",
+          "operatorAddress"
         ]
       },
       {
@@ -187,7 +194,13 @@ export async function GET() {
           "license",
           "requesterAddress"
         ],
-        optionalFields: ["participantType", "participantName", "operatorAddress"]
+        optionalFields: [
+          "userType",
+          "entityType",
+          "participantType",
+          "participantName",
+          "operatorAddress"
+        ]
       },
       {
         id: "submit_request_delivery",
@@ -196,6 +209,8 @@ export async function GET() {
         requiredFields: ["providerAddress", "deliveryText"],
         optionalFields: [
           "providerParticipantType",
+          "providerUserType",
+          "providerEntityType",
           "providerParticipantName",
           "providerOperatorAddress"
         ]

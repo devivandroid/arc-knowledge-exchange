@@ -14,6 +14,8 @@ export type PublishResourceFormValues = {
   deliveryType: string;
   requirements: string;
   deadline: string;
+  userType: string;
+  entityType: string;
   participantType: string;
   participantName: string;
   operatorAddress: string;

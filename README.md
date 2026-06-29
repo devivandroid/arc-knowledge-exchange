@@ -75,7 +75,7 @@ flowchart TB
   protected -->|"USDC protected settlement"| usdc
   usdc --> arc
 
-  data -. "future persistent event store" .-> postgres
+  data -->|"persistent events and network snapshots"| postgres
   marketplace -. "future durable resource storage" .-> ipfs
   requests -. "future delivery artifacts" .-> ipfs
 ```
@@ -146,24 +146,24 @@ KX combines five product surfaces:
 
 The current version keeps the working escrow contract flow for Requests. The fulfillment model is Manual Access (Escrow). Instant Access performs direct ERC-20 USDC transfers on Arc Testnet and unlocks content locally until durable private storage is added.
 
-## Participant Types
+## Participant Model
 
 KX supports self-declared participant metadata across marketplace resources,
 requests, and preview API responses:
 
-- **Human**: an individual seller, requester, provider, researcher, or builder.
-- **Agent**: an autonomous agent or agent-controlled service participating in commerce.
-- **Organization**: a team, lab, company, project, or collective operating through a wallet.
+- **User Type** describes who performs the action: `HUMAN` or `AGENT`.
+- **Entity Type** describes who or what the participant represents: `INDIVIDUAL`, `BUSINESS`, or `ORGANIZATION`.
 
-Participant metadata can include a display name, participant type, and optional operator wallet.
+Participant metadata can include a display name, user type, entity type, and optional operator wallet.
 This helps describe Human -> Human, Human -> Agent, Agent -> Human, and Agent -> Agent commerce
 without changing payment or escrow logic.
 
 Current limitations:
 
-- Participant type is self-declared metadata.
+- User type and entity type are self-declared metadata.
 - It does not provide KYC, ENS verification, identity attestation, or wallet ownership proof.
 - Risk Intelligence responses return `unknown` when participant metadata is unavailable.
+- Legacy API clients may still send `participantType`; KX maps it to the newer model where possible.
 - Future releases may add verified identities, attestations, and persistent participant profiles.
 
 ## What It Does
@@ -305,7 +305,7 @@ Fields:
 - file uploads for downloadable resources
 - agent-consumable flag
 
-Published resources are posted to the server API. With `DATABASE_URL` configured, they are persisted in PostgreSQL and visible to every visitor. Without `DATABASE_URL`, the app falls back to in-memory preview storage for local development.
+Published resources are posted to the server API. With `DATABASE_URL` configured, they are persisted in PostgreSQL and visible to every visitor. For the public demo, `DATABASE_URL` should point to Supabase Postgres. Without `DATABASE_URL`, the app falls back to in-memory preview storage for local development.
 
 The marketplace reads from `/api/resources/search`, which returns the shared public catalog. After publishing, the app redirects to `/marketplace/:id`.
 
@@ -323,7 +323,9 @@ Featured downloadable research assets include:
 
 Both featured datasets are synthetic benchmark packages. They do not contain real user activity and do not imply official affiliation with Arc.
 
-Runtime uploads are stored outside `/public` under:
+Runtime uploads use Supabase Storage when `RESOURCE_STORAGE_PROVIDER=supabase` and the Supabase server-side environment variables are configured. Files are stored in a private bucket and streamed through the KX download API after payment verification.
+
+Local development can still fall back to filesystem storage outside `/public` under:
 
 ```txt
 private-resources/<resourceId>/
@@ -363,7 +365,7 @@ Download endpoint:
 GET /api/download/:resourceId/:filename?txHash=0x...&buyerAddress=0x...
 ```
 
-The endpoint verifies payment proof, confirms the file belongs to the resource, streams the private file, sets `Content-Type`, and returns `Content-Disposition: attachment`.
+The endpoint verifies payment proof, confirms the file belongs to the resource, streams the private file from Supabase Storage or local development storage, sets `Content-Type`, and returns `Content-Disposition: attachment`.
 
 ## Requests
 
@@ -569,8 +571,8 @@ profiles through the public Risk Intelligence Service routes:
 ```txt
 GET /api/risk/profile/:wallet
 GET /api/risk/profile/:wallet?source=internal
-GET /api/risk/network/:wallet
-GET /api/risk/profile/:wallet?source=combined
+GET /api/risk/network/:wallet?useIndexedData=true
+GET /api/risk/profile/:wallet?source=combined&useIndexedData=true
 GET /api/risk/summary/:wallet
 GET /api/risk/signals/:wallet
 GET /api/risk/model
@@ -591,7 +593,9 @@ balance. Those counters are labeled as Arcscan API counters in the UI because ex
 filters may differ from raw API counters. It also indexes ERC-20 USDC Transfer logs on demand for the requested wallet,
 caches snapshots in PostgreSQL when `DATABASE_URL` is configured, and returns transfer volume,
 counterparties, outgoing transfer gas used, last transfer activity and analyzed block range when
-those logs are available. The
+those logs are available. Arc Network reads use indexed data by default when a snapshot is less
+than 1 minute old;
+set `useIndexedData=false` to force a fresh Arc Network refresh. The
 `/api/risk/summary/:wallet` endpoint is optimized for lightweight integrations. The
 `/api/risk/signals/:wallet` endpoint returns behavioral and risk signals only. Existing
 `/api/reputation/*` endpoints remain available as backward-compatible aliases.
@@ -609,9 +613,13 @@ const client = new KXClient({
 });
 
 const resources = await client.searchResources({ agentConsumable: true });
+const uploaded = await client.uploadResourceFiles("my-resource-id", [file]);
 const payment = await client.getPaymentInstructions(resources.resources[0].id);
 const combinedProfile = await client.getCombinedProfile(payment.sellerAddress);
 const networkProfile = await client.getNetworkProfile(payment.sellerAddress);
+const refreshedNetworkProfile = await client.getNetworkProfile(payment.sellerAddress, {
+  useIndexedData: false
+});
 const risk = await client.evaluateTransactionRisk(payment.sellerAddress, {
   maxRiskScore: 40,
   allowedRiskTiers: ["Low", "Medium"],
@@ -620,7 +628,7 @@ const risk = await client.evaluateTransactionRisk(payment.sellerAddress, {
 });
 ```
 
-The SDK covers marketplace resources, publish flows, HTTP 402 payment verification, unlocked
+The SDK covers marketplace resources, resource file uploads, publish flows, HTTP 402 payment verification, unlocked
 resource retrieval, ratings, Requests, delivery metadata, Risk Intelligence and API capability
 discovery. It does not sign transactions or custody funds; wallet operations still require a wallet
 runtime such as MetaMask or an agent-controlled signer.
@@ -734,7 +742,7 @@ requests or purchase starts without completion.
 
 The API returns:
 
-- participant-aware risk profiles with participant type, participant name and operator wallet when available
+- participant-aware risk profiles with user type, entity type, participant name and operator wallet when available
 - financial behavior score from 0 to 1000
 - risk score from 0 to 100
 - risk tier, confidence level and activity level
@@ -750,9 +758,9 @@ Scope:
 - Does not score all Arc wallets globally.
 - Risk events are persisted in PostgreSQL when `DATABASE_URL` is configured.
 
-## PostgreSQL Persistence
+## Supabase Persistence
 
-The public demo supports PostgreSQL through `DATABASE_URL`.
+The public demo uses Supabase Postgres through `DATABASE_URL` and Supabase Storage for private downloadable files.
 
 Tables created automatically on first server access:
 
@@ -760,8 +768,20 @@ Tables created automatically on first server access:
 - `requests`: API-created request drafts and delivery metadata.
 - `purchase_receipts`: verified Instant Access payment receipts.
 - `resource_ratings`: one rating per wallet per resource, including updates.
+- `resource_files`: uploaded file metadata and private Supabase Storage object keys.
 - `risk_events`: KX activity events consumed by Risk Intelligence.
 - `participants`: wallet, agent, human and organization metadata derived from resources, requests and events.
+- `arc_network_snapshots`: cached Arc Network activity snapshots for Risk Intelligence.
+
+The same schema is versioned under `supabase/migrations/`.
+
+Storage:
+
+- Bucket: `kx-resource-files`
+- Visibility: private
+- Access path: files are streamed through KX API routes after payment verification
+- Server-side key: `SUPABASE_SERVICE_ROLE_KEY`
+- Client exposure: never expose the service role key in browser code or `NEXT_PUBLIC_*`
 
 Seed behavior:
 
@@ -770,7 +790,7 @@ Seed behavior:
 - Preview Risk Intelligence events are inserted with `ON CONFLICT DO NOTHING`.
 - Participant metadata is upserted from resource sellers, request participants and risk events.
 
-Without `DATABASE_URL`, the app keeps using in-memory preview storage so local development and CI remain simple.
+Without `DATABASE_URL`, the app keeps using in-memory preview storage so local development and CI remain simple. Without Supabase Storage variables, downloadable file uploads fall back to local filesystem storage for development only.
 
 ## MVP Limitations
 
@@ -778,8 +798,8 @@ Without `DATABASE_URL`, the app keeps using in-memory preview storage so local d
 - Not audited and not suitable for real funds.
 - Browser purchase receipts and unlock state use `localStorage`.
 - `localStorage` is used only for wallet-specific unlock UI state, immediate rating UX, and future draft UX.
-- Uploaded files still use local filesystem storage in this MVP.
-- File storage is local filesystem only; production should use R2, S3, Supabase Storage, IPFS, Arweave, or another access-controlled storage layer.
+- Uploaded files use Supabase Storage in the public demo and local filesystem fallback in development.
+- Supabase Storage is an MVP private-file backend; future versions may move durable asset delivery to R2, S3, IPFS, Arweave, or another access-controlled storage layer.
 - HTTP 402 verification is stateless and txHash-based.
 - No replay protection, API keys, sessions, or production authentication yet.
 - Ratings are shared through PostgreSQL when `DATABASE_URL` is configured; without it they fall back to local/in-memory preview behavior.
@@ -882,13 +902,20 @@ NEXT_PUBLIC_USDC_ADDRESS=0x3600000000000000000000000000000000000000
 NEXT_PUBLIC_ESCROW_CONTRACT=
 
 DATABASE_URL=
+SUPABASE_URL=
+SUPABASE_ANON_KEY=
+SUPABASE_SERVICE_ROLE_KEY=
+SUPABASE_STORAGE_BUCKET=kx-resource-files
+RESOURCE_STORAGE_PROVIDER=supabase
 
 PRIVATE_KEY=
 ```
 
 `PRIVATE_KEY` is only for local contract deployment. Never commit it, expose it in frontend code, upload it to GitHub, or set it on Fly.io unless you are intentionally running a private deployment job.
 
-`DATABASE_URL` enables shared PostgreSQL persistence for resources, request drafts, verified receipts, risk events and participant metadata. Leave it empty for local in-memory preview mode.
+`DATABASE_URL` enables shared Supabase/PostgreSQL persistence for resources, request drafts, verified receipts, ratings, risk events, Arc Network snapshots and participant metadata. Leave it empty for local in-memory preview mode.
+
+`SUPABASE_SERVICE_ROLE_KEY` is server-only and is used to upload and stream private resource files through KX API routes. Never expose it in frontend code, screenshots, public logs, GitHub, or `NEXT_PUBLIC_*` variables.
 
 ## Arc Testnet Configuration
 
@@ -966,7 +993,12 @@ fly secrets set NEXT_PUBLIC_CHAIN_ID=5042002
 fly secrets set NEXT_PUBLIC_EXPLORER_URL=https://testnet.arcscan.app
 fly secrets set NEXT_PUBLIC_USDC_ADDRESS=0x3600000000000000000000000000000000000000
 fly secrets set NEXT_PUBLIC_ESCROW_CONTRACT=<deployed WorkEscrow address>
-fly secrets set DATABASE_URL=<postgres connection string>
+fly secrets set DATABASE_URL=<supabase postgres connection string>
+fly secrets set SUPABASE_URL=<supabase project url>
+fly secrets set SUPABASE_ANON_KEY=<supabase anon key>
+fly secrets set SUPABASE_SERVICE_ROLE_KEY=<supabase service role key>
+fly secrets set SUPABASE_STORAGE_BUCKET=kx-resource-files
+fly secrets set RESOURCE_STORAGE_PROVIDER=supabase
 ```
 
 Build command:

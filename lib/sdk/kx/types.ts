@@ -2,9 +2,11 @@ import type {
   DeliveryType,
   InstantResource,
   LicenseType,
+  EntityType,
   ParticipantType,
   ResourceFile,
-  ResourceType
+  ResourceType,
+  UserType
 } from "@/types/resource";
 import type { RatingSummary, ResourceRating } from "@/lib/ratings";
 import type { RiskGuardPolicy } from "@/lib/sdk/risk-intelligence";
@@ -45,6 +47,8 @@ export type PublishResourceInput = {
   license: LicenseType;
   sellerAddress: string;
   sellerName?: string;
+  userType?: UserType;
+  entityType?: EntityType;
   participantType?: ParticipantType;
   participantName?: string;
   operatorAddress?: string;
@@ -61,6 +65,12 @@ export type PublishResourceResponse = {
   endpoint: string;
   purchaseEndpoint: string;
   message: string;
+};
+
+export type UploadResourceFilesResponse = {
+  ok: true;
+  resourceId: string;
+  files: ResourceFile[];
 };
 
 export type PaymentRequiredResponse = {
@@ -165,10 +175,14 @@ export type RequestDraft = {
   budgetUSDC: string;
   license: LicenseType | string;
   requesterAddress: string;
+  userType?: UserType;
+  entityType?: EntityType;
   participantType?: ParticipantType;
   participantName?: string;
   operatorAddress?: string;
   providerAddress?: string | null;
+  providerUserType?: UserType;
+  providerEntityType?: EntityType;
   providerParticipantType?: ParticipantType;
   providerParticipantName?: string;
   providerOperatorAddress?: string;
@@ -190,6 +204,8 @@ export type CreateRequestInput = {
   budgetUSDC: string;
   license: LicenseType | string;
   requesterAddress: string;
+  userType?: UserType;
+  entityType?: EntityType;
   participantType?: ParticipantType;
   participantName?: string;
   operatorAddress?: string;
@@ -204,6 +220,8 @@ export type CreateRequestResponse = {
 
 export type SubmitDeliveryInput = {
   providerAddress: string;
+  providerUserType?: UserType;
+  providerEntityType?: EntityType;
   providerParticipantType?: ParticipantType;
   providerParticipantName?: string;
   providerOperatorAddress?: string;
@@ -215,6 +233,8 @@ export type SubmitDeliveryInput = {
 export type SubmitDeliveryResponse = {
   requestId: string;
   providerAddress: string;
+  providerUserType?: UserType;
+  providerEntityType?: EntityType;
   providerParticipantType?: ParticipantType;
   providerParticipantName?: string;
   providerOperatorAddress?: string;

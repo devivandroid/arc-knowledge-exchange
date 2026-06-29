@@ -13,8 +13,12 @@ export async function GET(request: NextRequest) {
   const limit = Math.max(1, Math.min(Number(request.nextUrl.searchParams.get("limit") || 25), 100));
   const riskTier = request.nextUrl.searchParams.get("riskTier");
   const participantType = request.nextUrl.searchParams.get("participantType");
+  const userType = request.nextUrl.searchParams.get("userType");
+  const entityType = request.nextUrl.searchParams.get("entityType");
   const participants = (await getRiskProfilesAsync(100))
     .filter((profile) => !riskTier || profile.scores.riskTier === riskTier)
+    .filter((profile) => !userType || profile.participant.userType === userType)
+    .filter((profile) => !entityType || profile.participant.entityType === entityType)
     .filter((profile) => !participantType || profile.participant.type === participantType)
     .slice(0, limit)
     .map((profile) => toRiskSummaryResponse(profile));

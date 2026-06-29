@@ -19,11 +19,15 @@ export function toReputationApiResponse(summary: ReputationSummary) {
     scope: "KX activity only",
     network: "Arc Testnet",
     chainId: ARC_TESTNET_CHAIN_ID,
+    userType: summary.userType ?? null,
+    entityType: summary.entityType ?? null,
     participantType,
     participantName: summary.participantName ?? null,
     operatorAddress: summary.operatorAddress ?? null,
     participant: {
       type: participantType,
+      userType: summary.userType ?? null,
+      entityType: summary.entityType ?? null,
       name: summary.participantName ?? null,
       operatorAddress: summary.operatorAddress ?? null
     },

@@ -7,13 +7,16 @@ const featuredRiskDatasetId = "agent-financial-reputation-risk-benchmark";
 const validTxHash = `0x${"1".repeat(64)}`;
 const validBuyer = "0x5555555555555555555555555555555555555555";
 const unknownRiskWallet = "0x1234500000000000000000000000000000000000";
+const verbose = process.env.QA_VERBOSE === "1";
 
 const results = [];
 
 function record(name, ok, details = "") {
   results.push({ name, ok, details });
   const prefix = ok ? "PASS" : "FAIL";
-  console.log(`${prefix} ${name}${details ? ` - ${details}` : ""}`);
+  if (!ok || verbose) {
+    console.log(`${prefix} ${name}${details ? ` - ${details}` : ""}`);
+  }
 }
 
 function assert(condition, message) {
@@ -185,7 +188,8 @@ await test("GET /api/risk/summary/[wallet] returns compact summary", async () =>
   assert(response.status === 200, `expected 200, got ${response.status}`);
   assert(body.summary?.riskTier, "missing risk tier");
   assert(body.summary?.confidenceLevel, "missing confidence level");
-  assert(body.participant?.type, "missing participant type");
+  assert(body.participant?.userType, "missing user type");
+  assert(body.participant?.entityType, "missing entity type");
 });
 
 await test("GET /api/risk/signals/[wallet] returns signals", async () => {
@@ -561,8 +565,7 @@ for (const page of pages) {
 }
 
 const failed = results.filter((result) => !result.ok);
-console.log(`\nQA summary: ${results.length - failed.length}/${results.length} checks passed.`);
-
-if (failed.length > 0) {
-  process.exitCode = 1;
+if (verbose) {
+  console.log(`QA summary: ${results.length - failed.length}/${results.length} checks passed.`);
 }
+setTimeout(() => process.exit(failed.length > 0 ? 1 : 0), 1);

@@ -1,4 +1,9 @@
 import { randomUUID } from "crypto";
+import {
+  getEntityTypeFromLegacy,
+  getUserTypeFromLegacy,
+  isParticipantType
+} from "@/lib/participants";
 import { isPostgresEnabled, pgQuery, upsertParticipant } from "@/lib/server/postgres";
 import type { ReputationEvent } from "@/types/reputation";
 
@@ -9,6 +14,12 @@ type ReputationStore = {
 const globalStore = globalThis as typeof globalThis & {
   knowledgeExchangeReputationStore?: ReputationStore;
 };
+
+function getEventParticipantType(event: ReputationEvent) {
+  return isParticipantType(event.metadata?.participantType)
+    ? event.metadata.participantType
+    : null;
+}
 
 let riskEventsSeededPromise: Promise<void> | null = null;
 
@@ -396,8 +407,15 @@ async function upsertRiskEvent(event: ReputationEvent): Promise<void> {
   );
   await upsertParticipant({
     walletAddress: event.walletAddress,
-    participantType:
-      typeof event.metadata?.participantType === "string" ? event.metadata.participantType : null,
+    userType:
+      typeof event.metadata?.userType === "string"
+        ? event.metadata.userType
+        : getUserTypeFromLegacy(getEventParticipantType(event)),
+    entityType:
+      typeof event.metadata?.entityType === "string"
+        ? event.metadata.entityType
+        : getEntityTypeFromLegacy(getEventParticipantType(event)),
+    participantType: getEventParticipantType(event),
     participantName:
       typeof event.metadata?.participantName === "string" ? event.metadata.participantName : null,
     operatorAddress:
@@ -427,10 +445,15 @@ async function ensureDbRiskEventsSeeded() {
       );
       await upsertParticipant({
         walletAddress: event.walletAddress,
-        participantType:
-          typeof event.metadata?.participantType === "string"
-            ? event.metadata.participantType
-            : null,
+        userType:
+          typeof event.metadata?.userType === "string"
+            ? event.metadata.userType
+            : getUserTypeFromLegacy(getEventParticipantType(event)),
+        entityType:
+          typeof event.metadata?.entityType === "string"
+            ? event.metadata.entityType
+            : getEntityTypeFromLegacy(getEventParticipantType(event)),
+        participantType: getEventParticipantType(event),
         participantName:
           typeof event.metadata?.participantName === "string"
             ? event.metadata.participantName

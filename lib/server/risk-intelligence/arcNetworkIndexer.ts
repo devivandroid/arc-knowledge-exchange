@@ -11,6 +11,10 @@ import {
   ARC_TESTNET_RPC_URL,
   ARC_TESTNET_USDC
 } from "@/lib/chains/arcTestnet";
+import {
+  getArcscanAddressStats,
+  type ArcscanAddressStats
+} from "@/lib/server/risk-intelligence/arcscanAdapter";
 import { isPostgresEnabled, pgQuery } from "@/lib/server/postgres";
 
 const rpcUrl = process.env.NEXT_PUBLIC_RPC_URL || ARC_TESTNET_RPC_URL;
@@ -18,7 +22,7 @@ const nativeRpcDecimals = 18;
 const transferTopic = id("Transfer(address,address,uint256)");
 const defaultBlockWindow = Number(process.env.ARC_NETWORK_INDEXER_BLOCK_WINDOW ?? 250_000);
 const defaultChunkSize = Number(process.env.ARC_NETWORK_INDEXER_CHUNK_SIZE ?? 9_000);
-const cacheTtlSeconds = Number(process.env.ARC_NETWORK_INDEXER_CACHE_SECONDS ?? 900);
+const cacheTtlSeconds = Number(process.env.ARC_NETWORK_INDEXER_CACHE_SECONDS ?? 60);
 
 export type ArcNetworkSnapshot = {
   wallet: string;
@@ -36,6 +40,7 @@ export type ArcNetworkSnapshot = {
   toBlock: number;
   indexedAt: string;
   cacheSource: "live_index" | "postgres_cache";
+  arcscanStats?: ArcscanAddressStats | null;
 };
 
 type SnapshotRow = {
@@ -43,6 +48,27 @@ type SnapshotRow = {
   to_block: string;
   updated_at: Date;
 };
+
+export type ArcNetworkIndexOptions = {
+  useIndexedData?: boolean;
+};
+
+async function ensureArcNetworkSnapshotTable(): Promise<void> {
+  if (!isPostgresEnabled()) return;
+
+  await pgQuery(`
+    CREATE TABLE IF NOT EXISTS arc_network_snapshots (
+      wallet_address TEXT PRIMARY KEY,
+      data JSONB NOT NULL,
+      from_block BIGINT NOT NULL,
+      to_block BIGINT NOT NULL,
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+
+    CREATE INDEX IF NOT EXISTS arc_network_snapshots_updated_idx
+      ON arc_network_snapshots (updated_at DESC);
+  `);
+}
 
 function formatUSDC(value: bigint): string {
   return Number(formatUnits(value, ARC_TESTNET_USDC.decimals)).toFixed(6);
@@ -58,12 +84,13 @@ function getPaddedAddressTopic(address: string): string {
 
 async function getCachedSnapshot(
   wallet: string,
-  toBlock: number
+  options: ArcNetworkIndexOptions = {}
 ): Promise<ArcNetworkSnapshot | null> {
   if (!isPostgresEnabled()) return null;
 
   let rows: SnapshotRow[];
   try {
+    await ensureArcNetworkSnapshotTable();
     rows = await pgQuery<SnapshotRow>(
       `
         SELECT data, to_block, updated_at
@@ -80,7 +107,8 @@ async function getCachedSnapshot(
   const row = rows[0];
   if (!row) return null;
   const ageSeconds = (Date.now() - new Date(row.updated_at).getTime()) / 1000;
-  return ageSeconds <= cacheTtlSeconds && Number(row.to_block) >= toBlock
+  const useIndexedData = options.useIndexedData ?? true;
+  return useIndexedData && ageSeconds <= cacheTtlSeconds
     ? { ...row.data, cacheSource: "postgres_cache" }
     : null;
 }
@@ -89,6 +117,7 @@ async function saveSnapshot(snapshot: ArcNetworkSnapshot): Promise<void> {
   if (!isPostgresEnabled()) return;
 
   try {
+    await ensureArcNetworkSnapshotTable();
     await pgQuery(
       `
         INSERT INTO arc_network_snapshots (
@@ -146,18 +175,25 @@ async function getTransferLogs(
   return { sent, received };
 }
 
-export async function indexArcNetworkSnapshot(wallet: string): Promise<ArcNetworkSnapshot> {
-  const provider = new JsonRpcProvider(rpcUrl, ARC_TESTNET_CHAIN_ID);
+export async function indexArcNetworkSnapshot(
+  wallet: string,
+  options: ArcNetworkIndexOptions = {}
+): Promise<ArcNetworkSnapshot> {
   const normalizedWallet = getAddress(wallet);
-  const [latestBlock, balance] = await Promise.all([
-    provider.getBlockNumber(),
-    provider.getBalance(normalizedWallet)
-  ]);
-  const fromBlock = Math.max(0, latestBlock - Math.max(1, defaultBlockWindow));
-  const cached = await getCachedSnapshot(normalizedWallet, latestBlock);
+  const cached =
+    options.useIndexedData === false
+      ? null
+      : await getCachedSnapshot(normalizedWallet, options);
 
   if (cached) return cached;
 
+  const provider = new JsonRpcProvider(rpcUrl, ARC_TESTNET_CHAIN_ID);
+  const [latestBlock, balance, arcscanStats] = await Promise.all([
+    provider.getBlockNumber(),
+    provider.getBalance(normalizedWallet),
+    getArcscanAddressStats(normalizedWallet)
+  ]);
+  const fromBlock = Math.max(0, latestBlock - Math.max(1, defaultBlockWindow));
   const walletTopic = getPaddedAddressTopic(normalizedWallet);
   const { sent, received } = await getTransferLogs(provider, walletTopic, fromBlock, latestBlock);
   const txHashes = new Set<string>();
@@ -208,7 +244,8 @@ export async function indexArcNetworkSnapshot(wallet: string): Promise<ArcNetwor
     fromBlock,
     toBlock: latestBlock,
     indexedAt: new Date().toISOString(),
-    cacheSource: "live_index"
+    cacheSource: "live_index",
+    arcscanStats
   };
 
   await saveSnapshot(snapshot);

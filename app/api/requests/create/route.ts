@@ -1,7 +1,19 @@
 import { isAddress } from "ethers";
 import { NextResponse, type NextRequest } from "next/server";
-import { isParticipantType } from "@/lib/participants";
-import { createServerRequestAsync, isLicenseType, parseTags } from "@/lib/server/agentMockStore";
+import {
+  getEntityTypeFromLegacy,
+  getLegacyParticipantType,
+  getUserTypeFromLegacy,
+  isEntityType,
+  isParticipantType,
+  isUserType
+} from "@/lib/participants";
+import {
+  createServerRequestAsync,
+  isLicenseType,
+  isResourceType,
+  parseTags
+} from "@/lib/server/agentMockStore";
 import { trackReputationEventAsync } from "@/lib/server/reputation/reputationEventStore";
 import { isValidUsdcAmount } from "@/lib/validateUsdcAmount";
 
@@ -59,6 +71,12 @@ export async function POST(request: NextRequest) {
   const participantType = isParticipantType(body.participantType)
     ? body.participantType
     : undefined;
+  const userType = isUserType(body.userType)
+    ? body.userType
+    : getUserTypeFromLegacy(participantType);
+  const entityType = isEntityType(body.entityType)
+    ? body.entityType
+    : getEntityTypeFromLegacy(participantType);
   const participantName =
     typeof body.participantName === "string" && body.participantName.trim()
       ? body.participantName.trim()
@@ -77,9 +95,12 @@ export async function POST(request: NextRequest) {
     budgetUSDC,
     license: body.license,
     requesterAddress,
-    participantType,
+    userType,
+    entityType,
+    participantType: participantType ?? getLegacyParticipantType(userType),
     participantName,
     operatorAddress,
+    resourceType: isResourceType(body.resourceType) ? body.resourceType : "Custom Service",
     agentConsumable: Boolean(body.agentConsumable)
   });
 
@@ -90,7 +111,9 @@ export async function POST(request: NextRequest) {
     amountUSDC: String(budgetUSDC),
     metadata: {
       category: draft.category,
-      participantType: participantType ?? null,
+      userType,
+      entityType,
+      participantType: draft.participantType ?? null,
       participantName: participantName ?? null,
       operatorAddress: operatorAddress ?? null
     }

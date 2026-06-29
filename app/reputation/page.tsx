@@ -4,7 +4,7 @@ import { getEventsAsync } from "@/lib/server/reputation/reputationEventStore";
 import { maskWallet } from "@/lib/server/reputation/reputationResponse";
 import { ReputationLookup } from "@/app/reputation/ReputationLookup";
 import { getAppBaseUrl } from "@/lib/getAppBaseUrl";
-import { getParticipantLabel } from "@/lib/participants";
+import { getEntityTypeLabel, getUserTypeLabel } from "@/lib/participants";
 import {
   calculateRiskProfile,
   getUniqueRiskWallets
@@ -23,9 +23,11 @@ function formatDate(value: string | null): string {
 }
 
 function getParticipantDisplay(profile: RiskProfile): string {
-  const type = profile.participant.type !== "unknown"
-    ? getParticipantLabel(profile.participant.type)
-    : "Unknown participant type";
+  const type = `${getUserTypeLabel(
+    profile.participant.userType === "unknown" ? undefined : profile.participant.userType
+  )} / ${getEntityTypeLabel(
+    profile.participant.entityType === "unknown" ? undefined : profile.participant.entityType
+  )}`;
   return profile.participant.name ? `${profile.participant.name} - ${type}` : type;
 }
 
@@ -180,15 +182,17 @@ export default async function ReputationPage() {
           <pre className="mt-3 overflow-x-auto rounded-lg bg-black/40 p-3 text-xs leading-6 text-slate-300">
             {`curl ${appBaseUrl}/api/risk/profile/0x...
 curl ${appBaseUrl}/api/risk/profile/0x...?source=internal
-curl ${appBaseUrl}/api/risk/network/0x...
-curl ${appBaseUrl}/api/risk/profile/0x...?source=combined
+curl ${appBaseUrl}/api/risk/network/0x...?useIndexedData=true
+curl ${appBaseUrl}/api/risk/profile/0x...?source=combined&useIndexedData=true
 curl ${appBaseUrl}/api/risk/summary/0x...
 curl ${appBaseUrl}/api/risk/signals/0x...
 curl ${appBaseUrl}/api/risk/model
 curl ${appBaseUrl}/api/risk/participants`}
           </pre>
           <p className="mt-3 text-xs leading-5 text-slate-500">
-            Backward-compatible reputation endpoints remain available at /api/reputation/*.
+            Arc Network reads use indexed data by default when a snapshot is less than 1 minute old. Set
+            {" "}useIndexedData=false to force a live refresh. Backward-compatible reputation
+            endpoints remain available at /api/reputation/*.
           </p>
           <div className="mt-4 rounded-lg border border-arc-border bg-black/20 p-3">
             <p className="text-sm font-semibold text-white">Builder SDK</p>

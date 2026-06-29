@@ -18,8 +18,14 @@ import {
 import { useUsdc } from "@/hooks/useUsdc";
 import { useWallet } from "@/hooks/useWallet";
 import { escrowContractAddress, usdcDecimals } from "@/lib/contracts/microWorkEscrow";
-import { getParticipantBadgeClass, getParticipantLabel } from "@/lib/participants";
+import {
+  getEntityTypeLabel,
+  getParticipantBadgeClass,
+  getUserTypeFromLegacy,
+  getUserTypeLabel
+} from "@/lib/participants";
 import { parseTaskMetadata } from "@/lib/taskMetadata";
+import { encodeJsonDataUri } from "@/lib/utf8Base64";
 import { getExplorerAddressUrl, normalizeWeb3Error, shortenAddress } from "@/lib/web3";
 
 const zeroAddress = "0x0000000000000000000000000000000000000000";
@@ -99,8 +105,10 @@ export function TaskDetailsClient({ taskId }: TaskDetailsClientProps) {
   const deliveryMetadata = task ? parseTaskMetadata(task.deliveryURI) : null;
   const requesterName = metadata?.participantName || "Requester";
   const requesterType = metadata?.participantType;
+  const requesterUserType = metadata?.userType ?? getUserTypeFromLegacy(requesterType);
   const providerName = metadata?.providerParticipantName || "Provider";
   const providerType = metadata?.providerParticipantType;
+  const providerUserType = metadata?.providerUserType ?? getUserTypeFromLegacy(providerType);
   const normalizedAddress = address?.toLowerCase();
   const isClient = Boolean(
     task && normalizedAddress && task.client.toLowerCase() === normalizedAddress
@@ -217,7 +225,7 @@ export function TaskDetailsClient({ taskId }: TaskDetailsClientProps) {
       submittedAt: new Date().toISOString(),
       createdFrom: "KX Platform"
     };
-    const deliveryURI = `data:application/json;base64,${btoa(JSON.stringify(deliveryPayload))}`;
+    const deliveryURI = encodeJsonDataUri(deliveryPayload);
     const deliveryHash = keccak256(toUtf8Bytes(deliveryURI));
     await runTx(
       () => submitWork(task.id, deliveryHash, deliveryURI),
@@ -266,7 +274,7 @@ export function TaskDetailsClient({ taskId }: TaskDetailsClientProps) {
                     requesterType
                   )}`}
                 >
-                  {getParticipantLabel(requesterType)} requester
+                  {getUserTypeLabel(requesterUserType)} requester
                 </span>
               </div>
               {escrowContractAddress ? (
@@ -301,8 +309,12 @@ export function TaskDetailsClient({ taskId }: TaskDetailsClientProps) {
                 </dd>
               </div>
               <div>
-                <dt className="text-slate-500">Requester type</dt>
-                <dd className="mt-1 text-white">{getParticipantLabel(requesterType)}</dd>
+                <dt className="text-slate-500">User Type</dt>
+                <dd className="mt-1 text-white">{getUserTypeLabel(requesterUserType)}</dd>
+              </div>
+              <div>
+                <dt className="text-slate-500">Entity Type</dt>
+                <dd className="mt-1 text-white">{getEntityTypeLabel(metadata?.entityType)}</dd>
               </div>
               {metadata?.operatorAddress ? (
                 <div>
@@ -343,8 +355,16 @@ export function TaskDetailsClient({ taskId }: TaskDetailsClientProps) {
               </div>
               {providerType ? (
                 <div>
-                  <dt className="text-slate-500">Provider type</dt>
-                  <dd className="mt-1 text-white">{getParticipantLabel(providerType)}</dd>
+                  <dt className="text-slate-500">Provider User Type</dt>
+                  <dd className="mt-1 text-white">{getUserTypeLabel(providerUserType)}</dd>
+                </div>
+              ) : null}
+              {metadata?.providerEntityType ? (
+                <div>
+                  <dt className="text-slate-500">Provider Entity Type</dt>
+                  <dd className="mt-1 text-white">
+                    {getEntityTypeLabel(metadata.providerEntityType)}
+                  </dd>
                 </div>
               ) : null}
               <div>

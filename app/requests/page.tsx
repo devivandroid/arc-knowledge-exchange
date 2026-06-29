@@ -1,13 +1,17 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { PageHeader } from "@/components/PageHeader";
 import { PageShell } from "@/components/PageShell";
 import { TaskCard } from "@/components/TaskCard";
 import { isEscrowConfigured, useRecentTasks, useTaskCount } from "@/hooks/useEscrowContract";
-import { getTaskDisplayDescription, getTaskDisplayTitle } from "@/lib/taskMetadata";
+import {
+  getTaskDisplayDescription,
+  getTaskDisplayTitle,
+  parseTaskMetadata
+} from "@/lib/taskMetadata";
 import type { EscrowTask } from "@/lib/contracts/microWorkEscrow";
 
 type PublicRequestDraft = {
@@ -20,6 +24,7 @@ type PublicRequestDraft = {
   requesterAddress: string;
   participantType?: string;
   participantName?: string;
+  resourceType?: string;
   status: string;
   agentConsumable: boolean;
 };
@@ -45,7 +50,11 @@ export default function RequestsPage() {
   const taskCountQuery = useTaskCount();
   const requestsQuery = useRecentTasks();
   const [apiRequests, setApiRequests] = useState<PublicRequestDraft[]>([]);
-  const visibleRequests = requestsQuery.data?.filter(isProductionRequest) ?? [];
+  const [selectedResourceType, setSelectedResourceType] = useState("all");
+  const visibleRequests = useMemo(
+    () => requestsQuery.data?.filter(isProductionRequest) ?? [],
+    [requestsQuery.data]
+  );
 
   useEffect(() => {
     let cancelled = false;
@@ -66,6 +75,35 @@ export default function RequestsPage() {
     };
   }, []);
 
+  const getOnChainResourceType = (request: EscrowTask) =>
+    parseTaskMetadata(request.metadataURI)?.resourceType || "Custom Service";
+  const getApiResourceType = (request: PublicRequestDraft) =>
+    request.resourceType || "Custom Service";
+  const resourceTypes = useMemo(
+    () =>
+      Array.from(
+        new Set([
+          ...visibleRequests.map(getOnChainResourceType),
+          ...apiRequests.map(getApiResourceType)
+        ])
+      ).sort(),
+    [apiRequests, visibleRequests]
+  );
+  const filteredVisibleRequests = useMemo(
+    () =>
+      selectedResourceType === "all"
+        ? visibleRequests
+        : visibleRequests.filter((request) => getOnChainResourceType(request) === selectedResourceType),
+    [selectedResourceType, visibleRequests]
+  );
+  const filteredApiRequests = useMemo(
+    () =>
+      selectedResourceType === "all"
+        ? apiRequests
+        : apiRequests.filter((request) => getApiResourceType(request) === selectedResourceType),
+    [apiRequests, selectedResourceType]
+  );
+
   return (
     <PageShell>
       <PageHeader
@@ -73,6 +111,24 @@ export default function RequestsPage() {
         title="Requests"
         description="Custom knowledge work secured by USDC escrow. Request specialized deliverables from developers, researchers and AI-native service providers."
       />
+
+      <div className="mb-4 flex justify-end">
+        <label className="flex items-center gap-2 text-xs text-slate-500">
+          Resource type
+          <select
+            value={selectedResourceType}
+            onChange={(event) => setSelectedResourceType(event.target.value)}
+            className="h-9 rounded-lg border border-arc-border bg-arc-panel px-3 text-sm font-medium text-slate-200 outline-none transition focus:border-arc-blue"
+          >
+            <option value="all">All resource types</option>
+            {resourceTypes.map((resourceType) => (
+              <option key={resourceType} value={resourceType}>
+                {resourceType}
+              </option>
+            ))}
+          </select>
+        </label>
+      </div>
 
       <div className="mb-5 flex flex-col gap-3 rounded-lg border border-arc-border bg-arc-panel/80 p-5 sm:flex-row sm:items-center sm:justify-between">
         <div>
@@ -109,11 +165,11 @@ export default function RequestsPage() {
         </div>
       ) : null}
 
-      {requestsQuery.data && visibleRequests.length === 0 ? (
+      {requestsQuery.data && filteredVisibleRequests.length === 0 && filteredApiRequests.length === 0 ? (
         <div className="rounded-lg border border-dashed border-arc-border bg-arc-panel/80 p-6">
-          <p className="text-sm font-semibold text-white">No open requests yet</p>
+          <p className="text-sm font-semibold text-white">No matching requests yet</p>
           <p className="mt-2 max-w-xl text-sm leading-6 text-slate-400">
-            Create the first request, fund it with USDC escrow, and assign a provider.
+            Try another resource type or create the first matching request.
           </p>
           <Link
             href="/requests/new"
@@ -124,7 +180,7 @@ export default function RequestsPage() {
         </div>
       ) : null}
 
-      {apiRequests.length > 0 ? (
+      {filteredApiRequests.length > 0 ? (
         <section className="mb-5">
           <div className="mb-3 flex items-end justify-between gap-3">
             <div>
@@ -135,7 +191,7 @@ export default function RequestsPage() {
             </div>
           </div>
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-            {apiRequests.map((request) => (
+            {filteredApiRequests.map((request) => (
               <article
                 key={request.id}
                 className="rounded-lg border border-arc-border bg-arc-panel/80 p-5 shadow-glow"
@@ -156,6 +212,7 @@ export default function RequestsPage() {
                 </p>
                 <div className="mt-4 flex flex-wrap gap-2 text-xs text-slate-500">
                   <span>{request.budgetUSDC} USDC</span>
+                  <span>{getApiResourceType(request)}</span>
                   <span>{request.license}</span>
                   {request.participantName ? <span>{request.participantName}</span> : null}
                 </div>
@@ -166,7 +223,7 @@ export default function RequestsPage() {
       ) : null}
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-        {visibleRequests.map((request) => (
+        {filteredVisibleRequests.map((request) => (
           <TaskCard key={request.id.toString()} task={request} />
         ))}
       </div>

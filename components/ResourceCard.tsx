@@ -4,7 +4,11 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { RatingSummaryText, StarDisplay } from "@/components/StarRating";
 import { useWallet } from "@/hooks/useWallet";
-import { getParticipantBadgeClass, getParticipantLabel } from "@/lib/participants";
+import {
+  getEntityTypeLabel,
+  getParticipantBadgeClass,
+  getUserTypeLabel
+} from "@/lib/participants";
 import { hasPurchased } from "@/lib/purchases";
 import { getRatingSummary, type RatingSummary } from "@/lib/ratings";
 import type { InstantResource } from "@/types/resource";
@@ -69,7 +73,7 @@ export function ResourceCard({ resource }: ResourceCardProps) {
               resource.participantType
             )}`}
           >
-            {getParticipantLabel(resource.participantType)}
+            {getUserTypeLabel(resource.userType)}
           </span>
           {resource.deliveryType === "download" ? (
             <span className="rounded-full border border-purple-300/40 bg-purple-300/10 px-3 py-1 text-xs font-semibold text-purple-100">
@@ -102,7 +106,7 @@ export function ResourceCard({ resource }: ResourceCardProps) {
         </p>
         <p>
           Seller: {resource.participantName ?? resource.sellerName ?? "Independent Creator"} ·{" "}
-          {getParticipantLabel(resource.participantType)}
+          {getUserTypeLabel(resource.userType)} / {getEntityTypeLabel(resource.entityType)}
         </p>
         <p>Tags: {resource.tags.join(", ")}</p>
       </div>

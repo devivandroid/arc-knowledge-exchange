@@ -41,6 +41,8 @@ export async function GET(request: NextRequest) {
       files: resource.files ?? [],
       sellerName: resource.sellerName,
       sellerAddress: resource.sellerAddress,
+      userType: resource.userType ?? null,
+      entityType: resource.entityType ?? null,
       participantType: resource.participantType,
       participantName: resource.participantName,
       operatorAddress: resource.operatorAddress,

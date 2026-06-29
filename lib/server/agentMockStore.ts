@@ -5,10 +5,12 @@ import { getInstantResources } from "@/services/resources";
 import {
   licenseValues,
   resourceTypeValues,
+  type EntityType,
   type InstantResource,
   type LicenseType,
   type ParticipantType,
-  type ResourceType
+  type ResourceType,
+  type UserType
 } from "@/types/resource";
 
 export type AgentRequestDraft = {
@@ -21,13 +23,18 @@ export type AgentRequestDraft = {
   budgetUSDC: string;
   license: LicenseType;
   requesterAddress: string;
+  userType?: UserType;
+  entityType?: EntityType;
   participantType?: ParticipantType;
   participantName?: string;
   operatorAddress?: string;
   providerAddress?: string;
+  providerUserType?: UserType;
+  providerEntityType?: EntityType;
   providerParticipantType?: ParticipantType;
   providerParticipantName?: string;
   providerOperatorAddress?: string;
+  resourceType?: ResourceType;
   status: "Draft" | "Open" | "Submitted";
   agentConsumable: boolean;
   createdAt: string;
@@ -72,6 +79,8 @@ function getStore(): Store {
           license: "Apache-2.0",
           requesterAddress: "0x4444444444444444444444444444444444444444",
           participantType: "organization",
+          userType: "HUMAN",
+          entityType: "ORGANIZATION",
           participantName: "Autonomous Economy Lab",
           operatorAddress: "0x4444444444444444444444444444444444444444",
           status: "Open",
@@ -91,6 +100,8 @@ function getStore(): Store {
           license: "CC-BY-4.0",
           requesterAddress: "0x4444444444444444444444444444444444444444",
           participantType: "organization",
+          userType: "HUMAN",
+          entityType: "ORGANIZATION",
           participantName: "Regulatory Systems Lab",
           operatorAddress: "0x4444444444444444444444444444444444444444",
           status: "Open",
@@ -110,6 +121,8 @@ function getStore(): Store {
           license: "Commercial Use Allowed",
           requesterAddress: "0x4444444444444444444444444444444444444444",
           participantType: "human",
+          userType: "HUMAN",
+          entityType: "INDIVIDUAL",
           participantName: "Independent Governance Researcher",
           status: "Open",
           agentConsumable: true,
@@ -128,6 +141,8 @@ function getStore(): Store {
           license: "Personal Use Only",
           requesterAddress: "0x4444444444444444444444444444444444444444",
           participantType: "agent",
+          userType: "AGENT",
+          entityType: "INDIVIDUAL",
           participantName: "SupportAgent-QA",
           operatorAddress: "0x4444444444444444444444444444444444444444",
           status: "Open",
@@ -147,6 +162,8 @@ function getStore(): Store {
           license: "MIT",
           requesterAddress: "0x4444444444444444444444444444444444444444",
           participantType: "organization",
+          userType: "HUMAN",
+          entityType: "ORGANIZATION",
           participantName: "Structured Finance Ops",
           operatorAddress: "0x4444444444444444444444444444444444444444",
           status: "Open",
@@ -166,6 +183,8 @@ function getStore(): Store {
           license: "CC0",
           requesterAddress: "0x4444444444444444444444444444444444444444",
           participantType: "agent",
+          userType: "AGENT",
+          entityType: "INDIVIDUAL",
           participantName: "GovernanceAgent-Review",
           operatorAddress: "0x4444444444444444444444444444444444444444",
           status: "Open",
@@ -202,6 +221,8 @@ async function ensureDbResourcesSeeded() {
       );
       await upsertParticipant({
         walletAddress: resource.sellerAddress,
+        userType: resource.userType ?? null,
+        entityType: resource.entityType ?? null,
         participantType: resource.participantType ?? null,
         participantName: resource.participantName ?? resource.sellerName ?? null,
         operatorAddress: resource.operatorAddress ?? null,
@@ -228,6 +249,8 @@ async function ensureDbRequestsSeeded() {
       );
       await upsertParticipant({
         walletAddress: request.requesterAddress,
+        userType: request.userType ?? null,
+        entityType: request.entityType ?? null,
         participantType: request.participantType ?? null,
         participantName: request.participantName ?? null,
         operatorAddress: request.operatorAddress ?? null,
@@ -296,6 +319,8 @@ export async function publishServerResourceAsync(
   );
   await upsertParticipant({
     walletAddress: resource.sellerAddress,
+    userType: resource.userType ?? null,
+    entityType: resource.entityType ?? null,
     participantType: resource.participantType ?? null,
     participantName: resource.participantName ?? resource.sellerName ?? null,
     operatorAddress: resource.operatorAddress ?? null,
@@ -348,6 +373,8 @@ export async function createServerRequestAsync(
   );
   await upsertParticipant({
     walletAddress: request.requesterAddress,
+    userType: request.userType ?? null,
+    entityType: request.entityType ?? null,
     participantType: request.participantType ?? null,
     participantName: request.participantName ?? null,
     operatorAddress: request.operatorAddress ?? null,
@@ -361,6 +388,8 @@ export function submitServerRequestDelivery({
   requestId,
   providerAddress,
   providerParticipantType,
+  providerUserType,
+  providerEntityType,
   providerParticipantName,
   providerOperatorAddress,
   deliveryText,
@@ -370,6 +399,8 @@ export function submitServerRequestDelivery({
   requestId: string;
   providerAddress: string;
   providerParticipantType?: ParticipantType;
+  providerUserType?: UserType;
+  providerEntityType?: EntityType;
   providerParticipantName?: string;
   providerOperatorAddress?: string;
   deliveryText: string;
@@ -398,6 +429,8 @@ export function submitServerRequestDelivery({
   };
 
   request.providerAddress = providerAddress;
+  request.providerUserType = providerUserType;
+  request.providerEntityType = providerEntityType;
   request.providerParticipantType = providerParticipantType;
   request.providerParticipantName = providerParticipantName;
   request.providerOperatorAddress = providerOperatorAddress;
@@ -432,6 +465,8 @@ export async function submitServerRequestDeliveryAsync(
   );
   await upsertParticipant({
     walletAddress: result.request.providerAddress,
+    userType: result.request.providerUserType ?? null,
+    entityType: result.request.providerEntityType ?? null,
     participantType: result.request.providerParticipantType ?? null,
     participantName: result.request.providerParticipantName ?? null,
     operatorAddress: result.request.providerOperatorAddress ?? null,

@@ -1,4 +1,4 @@
-import type { InstantResource } from "@/types/resource";
+﻿import type { InstantResource } from "@/types/resource";
 
 export const instantResources: InstantResource[] = [
   {
@@ -17,6 +17,8 @@ export const instantResources: InstantResource[] = [
     deliveryType: "inline",
     sellerName: "ResearchAgent-01",
     participantType: "agent",
+    userType: "AGENT",
+    entityType: "INDIVIDUAL",
     participantName: "ResearchAgent-01",
     operatorAddress: "0xdddddddddddddddddddddddddddddddddddddddd",
     sellerAddress: "0xdddddddddddddddddddddddddddddddddddddddd",
@@ -48,6 +50,8 @@ export const instantResources: InstantResource[] = [
     deliveryType: "download",
     sellerName: "Autonomous Economy Lab",
     participantType: "organization",
+    userType: "HUMAN",
+    entityType: "ORGANIZATION",
     participantName: "Autonomous Economy Lab",
     operatorAddress: "0xcccccccccccccccccccccccccccccccccccccccc",
     sellerAddress: "0xcccccccccccccccccccccccccccccccccccccccc",
@@ -116,6 +120,8 @@ export const instantResources: InstantResource[] = [
     deliveryType: "download",
     sellerName: "ResearchAgent-01",
     participantType: "agent",
+    userType: "AGENT",
+    entityType: "INDIVIDUAL",
     participantName: "ResearchAgent-01",
     operatorAddress: "0xdddddddddddddddddddddddddddddddddddddddd",
     sellerAddress: "0xdddddddddddddddddddddddddddddddddddddddd",
@@ -177,6 +183,8 @@ export const instantResources: InstantResource[] = [
     deliveryType: "download",
     sellerName: "Independent Researcher",
     participantType: "human",
+    userType: "HUMAN",
+    entityType: "INDIVIDUAL",
     participantName: "Independent Researcher",
     sellerAddress: "0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
     lockedContentURI: "ake://resources/credit-card-fraud-detection-benchmark-package",
@@ -232,6 +240,8 @@ export const instantResources: InstantResource[] = [
     deliveryType: "inline",
     sellerName: "Autonomous Commerce Lab",
     participantType: "organization",
+    userType: "HUMAN",
+    entityType: "ORGANIZATION",
     participantName: "Autonomous Commerce Lab",
     operatorAddress: "0x1111111111111111111111111111111111111111",
     sellerAddress: "0x1111111111111111111111111111111111111111",
@@ -440,3 +450,5 @@ export function getInstantResources(): InstantResource[] {
 export function getInstantResourceById(id: string): InstantResource | undefined {
   return instantResources.find((resource) => resource.id === id);
 }
+
+

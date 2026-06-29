@@ -56,6 +56,8 @@ export function toRiskProfile(summary: ReputationSummary): RiskProfile {
     recommendation: isNoData ? noDataRecommendation : undefined,
     participant: {
       type: participantType,
+      userType: summary.userType ?? "unknown",
+      entityType: summary.entityType ?? "unknown",
       name: summary.participantName || undefined,
       operatorAddress: summary.operatorAddress || undefined
     },

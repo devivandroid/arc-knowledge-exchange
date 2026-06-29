@@ -1,4 +1,4 @@
-import type { ParticipantType } from "@/types/resource";
+import type { EntityType, ParticipantType, UserType } from "@/types/resource";
 
 export type ApiParticipantType = ParticipantType | "unknown";
 
@@ -18,6 +18,37 @@ export function getApiParticipantType(type?: ParticipantType | null): ApiPartici
 
 export function isParticipantType(value: unknown): value is ParticipantType {
   return value === "human" || value === "agent" || value === "organization";
+}
+
+export function isUserType(value: unknown): value is UserType {
+  return value === "HUMAN" || value === "AGENT";
+}
+
+export function isEntityType(value: unknown): value is EntityType {
+  return value === "INDIVIDUAL" || value === "BUSINESS" || value === "ORGANIZATION";
+}
+
+export function getUserTypeLabel(type?: UserType | null): string {
+  if (type === "AGENT") return "Agent";
+  return "Human";
+}
+
+export function getEntityTypeLabel(type?: EntityType | null): string {
+  if (type === "BUSINESS") return "Business";
+  if (type === "ORGANIZATION") return "Organization";
+  return "Individual";
+}
+
+export function getLegacyParticipantType(userType?: UserType | null): ParticipantType {
+  return userType === "AGENT" ? "agent" : "human";
+}
+
+export function getUserTypeFromLegacy(type?: ParticipantType | null): UserType {
+  return type === "agent" ? "AGENT" : "HUMAN";
+}
+
+export function getEntityTypeFromLegacy(type?: ParticipantType | null): EntityType {
+  return type === "organization" ? "ORGANIZATION" : "INDIVIDUAL";
 }
 
 export function getParticipantBadgeClass(type?: ParticipantType | null): string {

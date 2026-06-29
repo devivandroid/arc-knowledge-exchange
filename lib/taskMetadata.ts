@@ -1,4 +1,5 @@
-import type { ParticipantType } from "@/types/resource";
+import { decodeUtf8Base64 } from "@/lib/utf8Base64";
+import type { EntityType, ParticipantType, UserType } from "@/types/resource";
 
 export type TaskMetadata = {
   title?: string;
@@ -10,10 +11,14 @@ export type TaskMetadata = {
   license?: string;
   accessType?: "instant" | "manual";
   requesterAddress?: string;
+  userType?: UserType;
+  entityType?: EntityType;
   participantType?: ParticipantType;
   participantName?: string;
   operatorAddress?: string;
   providerAddress?: string;
+  providerUserType?: UserType;
+  providerEntityType?: EntityType;
   providerParticipantType?: ParticipantType;
   providerParticipantName?: string;
   providerOperatorAddress?: string;
@@ -33,7 +38,7 @@ export function parseTaskMetadata(metadataURI: string): TaskMetadata | null {
   try {
     if (metadataURI.startsWith("data:application/json;base64,")) {
       const encoded = metadataURI.replace("data:application/json;base64,", "");
-      return JSON.parse(atob(encoded)) as TaskMetadata;
+      return JSON.parse(decodeUtf8Base64(encoded)) as TaskMetadata;
     }
 
     if (metadataURI.trim().startsWith("{")) {

@@ -43,6 +43,9 @@ const client = new RiskIntelligenceClient({
 const profile = await client.getProfile(wallet);
 const network = await client.getNetworkProfile(wallet);
 const combined = await client.getCombinedProfile(wallet);
+const refreshedNetwork = await client.getNetworkProfile(wallet, {
+  useIndexedData: false
+});
 const summary = await client.getSummary(wallet);
 const signals = await client.getSignals(wallet);
 const participants = await client.listParticipants({ limit: 10 });
@@ -58,8 +61,8 @@ const guard = await client.evaluateTransactionRisk(wallet, {
 Available methods:
 
 - `getProfile(wallet)` calls `GET /api/risk/profile/:wallet`.
-- `getNetworkProfile(wallet)` calls `GET /api/risk/network/:wallet`.
-- `getCombinedProfile(wallet)` calls `GET /api/risk/profile/:wallet?source=combined`.
+- `getNetworkProfile(wallet, options)` calls `GET /api/risk/network/:wallet`.
+- `getCombinedProfile(wallet, options)` calls `GET /api/risk/profile/:wallet?source=combined`.
 - `getSummary(wallet)` calls `GET /api/risk/summary/:wallet`.
 - `getSignals(wallet)` calls `GET /api/risk/signals/:wallet`.
 - `getModel()` calls `GET /api/risk/model`.
@@ -73,11 +76,16 @@ Available methods:
 
 Threshold helpers return `false` for no-data profiles because there is no numeric risk score.
 
+Arc Network reads use indexed data by default when a snapshot is less than 1 minute old. Pass
+`{ useIndexedData: false }` to force a fresh Arc Network refresh for the requested wallet.
+
 `listParticipants` supports:
 
 - `limit`
 - `riskTier`
-- `participantType`
+- `userType`
+- `entityType`
+- `participantType` as a legacy alias for older clients
 
 ## Example Use Cases
 
@@ -179,7 +187,8 @@ const canProceed = summary.summary.riskTier !== "High" && !elevatedSignal;
 ```ts
 const participants = await client.listParticipants({
   limit: 10,
-  participantType: "agent"
+  userType: "AGENT",
+  entityType: "INDIVIDUAL"
 });
 ```
 
@@ -192,6 +201,8 @@ const participants = await client.listParticipants({
   "wallet": "0x...",
   "participant": {
     "type": "agent",
+    "userType": "AGENT",
+    "entityType": "INDIVIDUAL",
     "name": "ResearchAgent-01",
     "operatorAddress": "0x..."
   },

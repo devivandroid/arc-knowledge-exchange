@@ -10,10 +10,11 @@ import { TransactionStatus, type TransactionState } from "@/components/Transacti
 import { isEscrowConfigured, useEscrowContract } from "@/hooks/useEscrowContract";
 import { useWallet } from "@/hooks/useWallet";
 import { escrowAbi } from "@/lib/contracts/microWorkEscrow";
-import { isParticipantType } from "@/lib/participants";
+import { getLegacyParticipantType, isEntityType, isUserType } from "@/lib/participants";
+import { encodeJsonDataUri } from "@/lib/utf8Base64";
 import { isValidUsdcAmount } from "@/lib/validateUsdcAmount";
 import { normalizeWeb3Error } from "@/lib/web3";
-import { licenseValues, participantTypeValues, resourceTypeValues } from "@/types/resource";
+import { entityTypeValues, licenseValues, resourceTypeValues, userTypeValues } from "@/types/resource";
 import type { PublishResourceFormValues } from "@/types/task";
 import { useState } from "react";
 
@@ -38,12 +39,14 @@ export default function NewRequestPage() {
       unlockedContentMock: "",
       requirements: "",
       deadline: "",
+      userType: "HUMAN",
+      entityType: "INDIVIDUAL",
       participantType: "human",
       participantName: "",
       operatorAddress: ""
     }
   });
-  const selectedParticipantType = watch("participantType");
+  const selectedUserType = watch("userType");
   const isTxBusy = ["signature", "submitted", "confirming"].includes(txState.phase);
 
   const onSubmit = async (values: PublishResourceFormValues) => {
@@ -95,9 +98,11 @@ export default function NewRequestPage() {
         license: values.license,
         accessType: "manual",
         requesterAddress: address,
-        participantType: isParticipantType(values.participantType)
-          ? values.participantType
-          : "human",
+        userType: isUserType(values.userType) ? values.userType : "HUMAN",
+        entityType: isEntityType(values.entityType) ? values.entityType : "INDIVIDUAL",
+        participantType: getLegacyParticipantType(
+          isUserType(values.userType) ? values.userType : "HUMAN"
+        ),
         participantName: values.participantName.trim() || undefined,
         operatorAddress: values.operatorAddress.trim() || undefined,
         resourceType: values.resourceType,
@@ -105,7 +110,7 @@ export default function NewRequestPage() {
         deadline: values.deadline || null,
         createdFrom: "KX Platform"
       };
-      const metadataURI = `data:application/json;base64,${btoa(JSON.stringify(metadata))}`;
+      const metadataURI = encodeJsonDataUri(metadata);
       const tx = await createTask(values.budgetUsdc, metadataURI);
 
       setTxState({ phase: "submitted", hash: tx.hash, message: "Request creation submitted." });
@@ -236,29 +241,40 @@ export default function NewRequestPage() {
         </label>
 
         <label className="grid gap-2">
-          <span className="text-sm font-medium text-slate-200">Requester Type</span>
+          <span className="text-sm font-medium text-slate-200">User Type</span>
           <select
-            {...register("participantType")}
+            {...register("userType")}
             className="rounded-lg border border-arc-border bg-black/30 px-4 py-3 text-white outline-none transition focus:border-arc-blue"
           >
-            {participantTypeValues.map((value) => (
+            {userTypeValues.map((value) => (
               <option key={value} value={value}>
-                {value === "organization"
-                  ? "Organization"
-                  : value.charAt(0).toUpperCase() + value.slice(1)}
+                {value === "AGENT" ? "Agent" : "Human"}
               </option>
             ))}
           </select>
-          {selectedParticipantType === "agent" ? (
+          {selectedUserType === "AGENT" ? (
             <span className="text-xs leading-5 text-slate-500">
               Use this when an autonomous agent or agent-controlled service is requesting work.
             </span>
           ) : null}
-          {selectedParticipantType === "organization" ? (
-            <span className="text-xs leading-5 text-slate-500">
-              Use this when a team, company or project is requesting work.
-            </span>
-          ) : null}
+        </label>
+
+        <label className="grid gap-2">
+          <span className="text-sm font-medium text-slate-200">Entity Type</span>
+          <select
+            {...register("entityType")}
+            className="rounded-lg border border-arc-border bg-black/30 px-4 py-3 text-white outline-none transition focus:border-arc-blue"
+          >
+            {entityTypeValues.map((value) => (
+              <option key={value} value={value}>
+                {value === "INDIVIDUAL"
+                  ? "Individual"
+                  : value === "BUSINESS"
+                    ? "Business"
+                    : "Organization"}
+              </option>
+            ))}
+          </select>
         </label>
 
         <label className="grid gap-2">

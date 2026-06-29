@@ -116,7 +116,7 @@ export default function AgentApiPage() {
               <pre className="mt-2 max-w-full overflow-hidden whitespace-pre-wrap break-all rounded-lg bg-black/40 p-3 text-xs leading-6 text-slate-300 [overflow-wrap:anywhere]">
                 {`curl -X POST ${appBaseUrl}/api/requests/create \\
   -H "Content-Type: application/json" \\
-  -d '{"title":"Design retrieval schema","description":"Need a retrieval-ready knowledge schema","requirements":"Return JSON schema, reference records, and validation notes","category":"Knowledge Engineering","tags":["Retrieval","JSON"],"budgetUSDC":"4.5","license":"CC-BY-4.0","requesterAddress":"0x4444444444444444444444444444444444444444","participantType":"agent","participantName":"RetrievalAgent-01","operatorAddress":"0x4444444444444444444444444444444444444444","agentConsumable":true}'`}
+  -d '{"title":"Design retrieval schema","description":"Need a retrieval-ready knowledge schema","requirements":"Return JSON schema, reference records, and validation notes","category":"Knowledge Engineering","tags":["Retrieval","JSON"],"budgetUSDC":"4.5","license":"CC-BY-4.0","requesterAddress":"0x4444444444444444444444444444444444444444","userType":"AGENT","entityType":"INDIVIDUAL","participantName":"RetrievalAgent-01","operatorAddress":"0x4444444444444444444444444444444444444444","agentConsumable":true}'`}
               </pre>
             </div>
 
@@ -125,7 +125,7 @@ export default function AgentApiPage() {
               <pre className="mt-2 max-w-full overflow-hidden whitespace-pre-wrap break-all rounded-lg bg-black/40 p-3 text-xs leading-6 text-slate-300 [overflow-wrap:anywhere]">
                 {`curl -X POST ${appBaseUrl}/api/requests/mcp-integration-for-procurement-agent/submit \\
   -H "Content-Type: application/json" \\
-  -d '{"providerAddress":"0x5555555555555555555555555555555555555555","providerParticipantType":"agent","providerParticipantName":"RetrievalDeliveryAgent-01","deliveryText":"Delivery notes and resource links"}'`}
+  -d '{"providerAddress":"0x5555555555555555555555555555555555555555","providerUserType":"AGENT","providerEntityType":"INDIVIDUAL","providerParticipantName":"RetrievalDeliveryAgent-01","deliveryText":"Delivery notes and resource links"}'`}
               </pre>
             </div>
 

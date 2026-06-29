@@ -10,13 +10,14 @@ import { PageShell } from "@/components/PageShell";
 import { TransactionStatus, type TransactionState } from "@/components/TransactionStatus";
 import { useWallet } from "@/hooks/useWallet";
 import { createLocalResourceId } from "@/lib/localResources";
-import { isParticipantType } from "@/lib/participants";
+import { getLegacyParticipantType, isEntityType, isUserType } from "@/lib/participants";
 import { isValidUsdcAmount } from "@/lib/validateUsdcAmount";
 import { normalizeWeb3Error } from "@/lib/web3";
 import {
   licenseValues,
-  participantTypeValues,
+  entityTypeValues,
   resourceTypeValues,
+  userTypeValues,
   type InstantResource,
   type ResourceFile
 } from "@/types/resource";
@@ -44,12 +45,14 @@ export default function PublishResourcePage() {
       deliveryType: "inline",
       requirements: "",
       deadline: "",
+      userType: "HUMAN",
+      entityType: "INDIVIDUAL",
       participantType: "human",
       participantName: "",
       operatorAddress: ""
     }
   });
-  const selectedParticipantType = watch("participantType");
+  const selectedUserType = watch("userType");
   const isTxBusy = ["signature", "submitted", "confirming"].includes(txState.phase);
 
   useEffect(() => {
@@ -149,9 +152,11 @@ export default function PublishResourcePage() {
         accessType: "instant",
         deliveryType,
         sellerName: values.participantName.trim() || undefined,
-        participantType: isParticipantType(values.participantType)
-          ? values.participantType
-          : "human",
+        userType: isUserType(values.userType) ? values.userType : "HUMAN",
+        entityType: isEntityType(values.entityType) ? values.entityType : "INDIVIDUAL",
+        participantType: getLegacyParticipantType(
+          isUserType(values.userType) ? values.userType : "HUMAN"
+        ),
         participantName: values.participantName.trim() || undefined,
         operatorAddress: operatorAddress || undefined,
         sellerAddress,
@@ -278,30 +283,41 @@ export default function PublishResourcePage() {
         </label>
 
         <label className="grid min-w-0 gap-2">
-          <span className="text-sm font-medium text-slate-200">Seller Type</span>
+          <span className="text-sm font-medium text-slate-200">User Type</span>
           <select
-            {...register("participantType")}
+            {...register("userType")}
             className="w-full min-w-0 rounded-lg border border-arc-border bg-black/30 px-4 py-3 text-white outline-none transition focus:border-arc-blue"
           >
-            {participantTypeValues.map((value) => (
+            {userTypeValues.map((value) => (
               <option key={value} value={value}>
-                {value === "organization"
-                  ? "Organization"
-                  : value.charAt(0).toUpperCase() + value.slice(1)}
+                {value === "AGENT" ? "Agent" : "Human"}
               </option>
             ))}
           </select>
-          {selectedParticipantType === "agent" ? (
+          {selectedUserType === "AGENT" ? (
             <span className="text-xs leading-5 text-slate-500">
               Use this when an autonomous agent or agent-controlled service is selling this
               resource.
             </span>
           ) : null}
-          {selectedParticipantType === "organization" ? (
-            <span className="text-xs leading-5 text-slate-500">
-              Use this when a team, company or project is selling this resource.
-            </span>
-          ) : null}
+        </label>
+
+        <label className="grid min-w-0 gap-2">
+          <span className="text-sm font-medium text-slate-200">Entity Type</span>
+          <select
+            {...register("entityType")}
+            className="w-full min-w-0 rounded-lg border border-arc-border bg-black/30 px-4 py-3 text-white outline-none transition focus:border-arc-blue"
+          >
+            {entityTypeValues.map((value) => (
+              <option key={value} value={value}>
+                {value === "INDIVIDUAL"
+                  ? "Individual"
+                  : value === "BUSINESS"
+                    ? "Business"
+                    : "Organization"}
+              </option>
+            ))}
+          </select>
         </label>
 
         <label className="grid min-w-0 gap-2">
