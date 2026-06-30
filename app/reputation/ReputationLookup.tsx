@@ -197,19 +197,23 @@ export function ReputationLookup() {
         source === "arc_network"
           ? `/api/risk/network/${wallet}?useIndexedData=${useIndexedData}`
           : `/api/risk/profile/${wallet}?source=${source}&useIndexedData=${useIndexedData}`;
-      const [response, internalResponse, networkResponse] = await Promise.all([
-        fetch(endpoint),
-        fetch(`/api/risk/profile/${wallet}?source=internal`),
-        fetch(`/api/risk/network/${wallet}?useIndexedData=${useIndexedData}`)
-      ]);
+      const response = await fetch(endpoint);
       const body = await response.json();
       if (!response.ok) {
         throw new Error(body.message || body.error || "Lookup failed.");
       }
 
+      const networkBreakdown =
+        source === "arc_network"
+          ? body
+          : await fetch(`/api/risk/network/${wallet}?useIndexedData=true`).then((networkResponse) =>
+              networkResponse.ok ? networkResponse.json() : null
+            );
       const [internalBody, networkBody] = await Promise.all([
-        internalResponse.ok ? internalResponse.json() : Promise.resolve(null),
-        networkResponse.ok ? networkResponse.json() : Promise.resolve(null)
+        fetch(`/api/risk/profile/${wallet}?source=internal`).then((internalResponse) =>
+          internalResponse.ok ? internalResponse.json() : null
+        ),
+        Promise.resolve(networkBreakdown)
       ]);
 
       setResult(body);
